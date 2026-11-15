@@ -140,6 +140,9 @@ Future<void> removeHost(BuildContext context, WidgetRef ref, PingSession s) asyn
     ?..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
+        // An action makes snackbars stay until tapped; Undo should fade.
+        persist: false,
+        duration: const Duration(seconds: 5),
         content: Row(
           children: [
             PulseIcon(PulseIcons.trash, size: 20, color: iconColor),

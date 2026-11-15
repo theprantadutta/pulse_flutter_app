@@ -74,6 +74,7 @@ class _StorePromptsState extends ConsumerState<StorePrompts> with WidgetsBinding
         ..showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 10),
+            persist: false, // "Update" is an offer; it fades after 10 s
             content: Text(v == null ? 'A new version of Pulse is available.' : 'Pulse $v is available.'),
             action: SnackBarAction(label: 'Update', onPressed: () => startAppUpdate(context, ref)),
           ),
