@@ -110,6 +110,9 @@ class SpeedNotifier extends Notifier<SpeedState> {
     return haversineKm(me!.lat!, me.lon!, s.lat!, s.lon!);
   }
 
+  /// How often the live Mbps figure may change on screen.
+  static const liveNumberEvery = Duration(seconds: 1);
+
   Future<void> start() async {
     if (state.running) return;
     if (!state.hasServer) await autoSelect();
@@ -118,14 +121,26 @@ class SpeedNotifier extends Notifier<SpeedState> {
     state = SpeedState(server: state.server, autoSelected: state.autoSelected, phase: SpeedPhase.ping);
     final samples = <SpeedSample>[];
     final done = Completer<void>();
+    // The big number changes at most once a second (each change then gets a
+    // full, readable digit roll); progress and the chart still move per tick.
+    var shownAt = DateTime.fromMillisecondsSinceEpoch(0);
+    var shownPhase = state.phase;
+    double? shown;
     _sub = _test!
         .run(state.server)
         .listen(
           (u) {
             if (u.sample != null) samples.add(u.sample!);
+            final now = DateTime.now();
+            if (u.liveMbps != null &&
+                (u.phase != shownPhase || shown == null || now.difference(shownAt) >= liveNumberEvery)) {
+              shown = u.liveMbps;
+              shownAt = now;
+            }
+            shownPhase = u.phase;
             state = state.copyWith(
               phase: u.phase,
-              liveMbps: u.liveMbps,
+              liveMbps: shown,
               pingMs: u.pingMs,
               jitterMs: u.jitterMs,
               downMbps: u.downMbps,

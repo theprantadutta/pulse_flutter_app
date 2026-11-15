@@ -285,7 +285,7 @@ class SpeedTest {
   }
 
   /// Smoothing window for the live figure.
-  static const liveWindow = Duration(seconds: 2);
+  static const liveWindow = Duration(seconds: 3);
 
   /// Emits (live Mbps over [liveWindow], overall Mbps, progress, Mbps over the
   /// last 250 ms tick) every 250 ms.

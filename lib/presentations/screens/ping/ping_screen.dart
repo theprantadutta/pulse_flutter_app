@@ -128,10 +128,14 @@ class _PhoneHome extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             children: [
               for (final x in board.sessions)
-                PulseChip(
-                  label: x.title,
-                  selected: x.id == s.id,
-                  onTap: () => ref.read(pingBoardProvider.notifier).focus(x.id),
+                GestureDetector(
+                  onLongPress: () => showHostActions(context, ref, x),
+                  child: PulseChip(
+                    label: x.title,
+                    icon: x.running ? null : PulseIcons.pause,
+                    selected: x.id == s.id,
+                    onTap: () => ref.read(pingBoardProvider.notifier).focus(x.id),
+                  ),
                 ),
               PulseChip(label: 'Add host', icon: PulseIcons.plus, onTap: () => showAddHostSheet(context)),
             ],
@@ -159,6 +163,8 @@ class _PhoneHome extends ConsumerWidget {
             ),
           ),
         ),
+        const SizedBox(height: 4),
+        HostControls(session: s),
         if (state == HostState.failed) ...[
           const SizedBox(height: 12),
           PulseErrorBanner(
@@ -186,7 +192,22 @@ class _PhoneHome extends ConsumerWidget {
         if (others.isNotEmpty) ...[
           const PulseSectionLabel('Other hosts', padding: EdgeInsets.fromLTRB(4, 18, 0, 8)),
           PulseSegmentedList(
-            children: [for (final x in others) HostListItem(session: x, gateway: gateway)],
+            children: [
+              for (final x in others)
+                // Swipe left to remove one host; the row's button pauses it.
+                Dismissible(
+                  key: ValueKey('host-${x.id}'),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (_) => removeHost(context, ref, x),
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    decoration: BoxDecoration(color: c.errorContainer, borderRadius: BorderRadius.circular(20)),
+                    child: PulseIcon(PulseIcons.trash, size: 22, color: c.onErrorContainer),
+                  ),
+                  child: HostListItem(session: x, gateway: gateway, controls: true),
+                ),
+            ],
           ),
         ],
       ],

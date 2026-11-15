@@ -116,6 +116,171 @@ void openPingDetail(BuildContext context, WidgetRef ref, PingSession s) {
   context.go('${Routes.pingDetail}?id=${Uri.encodeQueryComponent(s.id)}');
 }
 
+/// Pauses one host (saving its run to History) or resumes it in place,
+/// leaving every other host as it is.
+Future<void> toggleHost(BuildContext context, WidgetRef ref, PingSession s) async {
+  if (s.running) {
+    await ref.read(pingBoardProvider.notifier).stop(s.id);
+    if (context.mounted) showPulseToast(context, 'Paused ${s.title}', icon: PulseIcons.pause);
+  } else {
+    await restartHost(context, ref, s);
+  }
+}
+
+/// Removes one host from the board (its run is saved to History first), with
+/// an Undo that puts it back in the same place with the same settings.
+Future<void> removeHost(BuildContext context, WidgetRef ref, PingSession s) async {
+  final board = ref.read(pingBoardProvider);
+  final at = board.sessions.indexWhere((x) => x.id == s.id);
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final iconColor = Theme.of(context).colorScheme.inversePrimary;
+  final n = ref.read(pingBoardProvider.notifier);
+  await n.remove(s.id);
+  messenger
+    ?..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            PulseIcon(PulseIcons.trash, size: 20, color: iconColor),
+            const SizedBox(width: 12),
+            Expanded(child: Text('Removed ${s.title}')),
+          ],
+        ),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () => n.start(s.host, name: s.name, params: s.params, at: at < 0 ? null : at),
+        ),
+      ),
+    );
+}
+
+enum _HostAction { toggle, details, remove }
+
+/// Long-press menu for one host: pause/resume, details, remove.
+Future<void> showHostActions(BuildContext context, WidgetRef ref, PingSession s) async {
+  final c = Theme.of(context).colorScheme;
+  final action = await showModalBottomSheet<_HostAction>(
+    context: context,
+    useRootNavigator: true,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+              child: Text(s.title, style: context.type.titleLarge),
+            ),
+            PulseSegmentedList(
+              animate: false,
+              children: [
+                PulseListItem(
+                  title: s.running ? 'Pause' : 'Resume',
+                  subtitle: s.running ? 'Other hosts keep running' : 'Start pinging this host again',
+                  leading: PulseIcon(s.running ? PulseIcons.pause : PulseIcons.play, size: 22),
+                  color: c.surfaceContainerHigh,
+                  onTap: () => Navigator.pop(context, _HostAction.toggle),
+                ),
+                PulseListItem(
+                  title: 'Details',
+                  subtitle: 'Replies, chart and options',
+                  leading: const PulseIcon(PulseIcons.info, size: 22),
+                  color: c.surfaceContainerHigh,
+                  onTap: () => Navigator.pop(context, _HostAction.details),
+                ),
+                PulseListItem(
+                  title: 'Remove',
+                  subtitle: 'Its run stays in History',
+                  leading: PulseIcon(PulseIcons.trash, size: 22, color: c.error),
+                  color: c.surfaceContainerHigh,
+                  onTap: () => Navigator.pop(context, _HostAction.remove),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (action == null || !context.mounted) return;
+  switch (action) {
+    case _HostAction.toggle:
+      await toggleHost(context, ref, s);
+    case _HostAction.details:
+      openPingDetail(context, ref, s);
+    case _HostAction.remove:
+      await removeHost(context, ref, s);
+  }
+}
+
+/// Pause/resume and remove for one host, as a compact button pair.
+class HostControls extends ConsumerWidget {
+  const HostControls({super.key, required this.session, this.compact = false});
+  final PingSession session;
+
+  /// Icon-only buttons (tablet cards).
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = session;
+    if (compact) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PulseIconButton(
+            icon: s.running ? PulseIcons.pause : PulseIcons.play,
+            tooltip: s.running ? 'Pause ${s.title}' : 'Resume ${s.title}',
+            // Neutral reads on both the plain and the highlighted card.
+            style: PulseIconButtonStyle.neutral,
+            visualSize: 36,
+            iconSize: 18,
+            onPressed: () => toggleHost(context, ref, s),
+          ),
+          const SizedBox(width: 6),
+          PulseIconButton(
+            icon: PulseIcons.trash,
+            tooltip: 'Remove ${s.title}',
+            visualSize: 36,
+            iconSize: 18,
+            onPressed: () => removeHost(context, ref, s),
+          ),
+        ],
+      );
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IntrinsicWidth(
+          child: PulseButton(
+            label: s.running ? 'Pause' : 'Resume',
+            icon: s.running ? PulseIcons.pause : PulseIcons.play,
+            style: PulseButtonStyle.tonal,
+            size: PulseButtonSize.small,
+            tooltip: s.running ? 'Pause only ${s.title}' : 'Resume ${s.title}',
+            onPressed: () => toggleHost(context, ref, s),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IntrinsicWidth(
+          child: PulseButton(
+            label: 'Remove',
+            icon: PulseIcons.trash,
+            style: PulseButtonStyle.outlined,
+            size: PulseButtonSize.small,
+            tooltip: 'Remove ${s.title} from the board',
+            onPressed: () => removeHost(context, ref, s),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Restarts [s] (optionally with new settings) and keeps Ping detail on it.
 Future<String?> restartHost(
   BuildContext context,
@@ -317,6 +482,7 @@ class HostListItem extends ConsumerWidget {
     this.color,
     this.minHeight = 58,
     this.onTap,
+    this.controls = false,
   });
 
   final PingSession session;
@@ -325,6 +491,10 @@ class HostListItem extends ConsumerWidget {
   final Color? color;
   final double minHeight;
   final VoidCallback? onTap;
+
+  /// Board rows: a pause/resume button and a long-press menu (pause, details,
+  /// remove) so one host can be controlled without the others.
+  final bool controls;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -342,8 +512,24 @@ class HostListItem extends ConsumerWidget {
         color: color,
         minHeight: minHeight,
         leading: HostBadge(host: session.host, name: session.name, gateway: gateway),
-        trailing: HostLatency(session: session),
+        trailing: controls
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  HostLatency(session: session),
+                  const SizedBox(width: 6),
+                  PulseIconButton(
+                    icon: session.running ? PulseIcons.pause : PulseIcons.play,
+                    tooltip: session.running ? 'Pause ${session.title}' : 'Resume ${session.title}',
+                    visualSize: 36,
+                    iconSize: 18,
+                    onPressed: () => toggleHost(context, ref, session),
+                  ),
+                ],
+              )
+            : HostLatency(session: session),
         onTap: onTap ?? () => openPingDetail(context, ref, session),
+        onLongPress: controls ? () => showHostActions(context, ref, session) : null,
       ),
     );
   }
@@ -450,6 +636,7 @@ class HostCard extends ConsumerWidget {
         color: hero ? c.secondaryContainer : c.surfaceContainer,
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
         onTap: () => openPingDetail(context, ref, s),
+        onLongPress: () => showHostActions(context, ref, s),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -478,6 +665,8 @@ class HostCard extends ConsumerWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
+                HostControls(session: s, compact: true),
                 const SizedBox(width: 8),
                 HostStatusCookie(session: s),
               ],

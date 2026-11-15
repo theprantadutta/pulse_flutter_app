@@ -487,23 +487,26 @@ class PulseCard extends StatelessWidget {
     this.color,
     this.radius = 28,
     this.onTap,
+    this.onLongPress,
   });
   final Widget child;
   final EdgeInsetsGeometry padding;
   final Color? color;
   final double radius;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final bg = color ?? context.colors.surfaceContainer;
     if (onTap != null) {
-      return PulsePressable(
+      final card = PulsePressable(
         onTap: onTap,
         radius: radius,
         color: bg,
         child: Padding(padding: padding, child: child),
       );
+      return onLongPress == null ? card : GestureDetector(onLongPress: onLongPress, child: card);
     }
     return Container(
       padding: padding,
