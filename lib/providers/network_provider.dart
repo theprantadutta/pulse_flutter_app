@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../services/net/geo_ip.dart';
 import '../services/net/network_details.dart';
+import '../services/widgets/home_widgets.dart';
 import 'connection_provider.dart';
 import 'ping_provider.dart';
 import 'settings_provider.dart';
@@ -153,5 +156,18 @@ class NetworkInfoNotifier extends AsyncNotifier<NetworkSnapshot> {
       service.publicIpv6(interface: base.link.interfaceName).then((v) => push(snap.copyWith(publicIpv6: v))),
     ]);
     push(snap.copyWith(internetLoading: false));
+    if (gen != _generation) return;
+    // Home screen Network widget: the public address it may show (nothing
+    // when lookups are off) and the router it pings.
+    final g = snap.geo;
+    unawaited(
+      PulseWidgets.publishNetwork(
+        publicIp: lookups ? g?.ip : null,
+        isp: lookups ? g?.isp ?? g?.org : null,
+        city: lookups ? g?.city : null,
+        country: lookups ? g?.country : null,
+        gateway: base.link.gateway,
+      ),
+    );
   }
 }

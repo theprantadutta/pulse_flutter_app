@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pulse "Ping" widget (Jetpack Glance, see kotlin/.../widgets). Resizes from 1x1 up. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:previewImage="@mipmap/ic_launcher"
+    android:description="@string/widget_ping_description"
+    android:configure="com.example.pulse.widgets.WidgetConfigActivity"
+    android:widgetFeatures="reconfigurable" />

@@ -24,6 +24,7 @@ import '../../../services/store/app_reviews.dart';
 import '../../../services/store/app_updates.dart';
 import '../../navigation/destinations.dart';
 import 'settings_widgets.dart';
+import '../../../services/widgets/home_widgets.dart';
 
 const kPrivacyUrl = 'https://legal.pranta.dev/pulse/privacy';
 const kTermsUrl = 'https://legal.pranta.dev/pulse/terms';
@@ -215,6 +216,16 @@ class SettingsSectionBody extends ConsumerWidget {
           onChanged: dynamicOk || s.dynamicColor ? (v) => set((x) => x.copyWith(dynamicColor: v)) : null,
         );
         final accent = AccentPicker(selected: s.accent, enabled: !s.dynamicColor, onChanged: (k) => n.setAccent(k));
+        // Home screen widgets exist on phones and tablets only.
+        final widgetsTile = PulseWidgets.supported
+            ? SettingsValueItem(
+                icon: PulseIcons.grid,
+                title: 'Home screen widgets',
+                subtitle: 'Live ping, speed, monitor and shortcuts',
+                chevron: true,
+                onTap: () => context.push(Routes.widgets),
+              )
+            : null;
         final motion = PulseSwitchItem(
           icon: PulseIcons.motion,
           title: 'Expressive motion',
@@ -246,6 +257,7 @@ class SettingsSectionBody extends ConsumerWidget {
                     trailing: accent,
                   ),
                   motion,
+                  ?widgetsTile,
                 ],
               ),
             ],
@@ -257,6 +269,7 @@ class SettingsSectionBody extends ConsumerWidget {
             (r) => dynamicTile,
             (r) => AccentItem(radius: r, picker: accent, dimmed: s.dynamicColor),
             (r) => motion,
+            if (widgetsTile != null) (r) => widgetsTile,
           ],
         );
 

@@ -58,6 +58,91 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Continuous network monitoring: periodically pings user-chosen hosts and raises alerts on outages, packet loss and latency." />
         </service>
+        <!-- Home screen widgets (Jetpack Glance). Data comes from home_widget's
+             preferences; see lib/services/widgets/home_widgets.dart. -->
+        <receiver
+            android:name="com.example.pulse.widgets.PingWidgetReceiver"
+            android:label="@string/widget_ping_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_ping" />
+        </receiver>
+        <receiver
+            android:name="com.example.pulse.widgets.MultiPingWidgetReceiver"
+            android:label="@string/widget_multiping_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_multiping" />
+        </receiver>
+        <receiver
+            android:name="com.example.pulse.widgets.SpeedWidgetReceiver"
+            android:label="@string/widget_speed_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_speed" />
+        </receiver>
+        <receiver
+            android:name="com.example.pulse.widgets.MonitorWidgetReceiver"
+            android:label="@string/widget_monitor_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_monitor" />
+        </receiver>
+        <receiver
+            android:name="com.example.pulse.widgets.ActionsWidgetReceiver"
+            android:label="@string/widget_actions_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_actions" />
+        </receiver>
+        <receiver
+            android:name="com.example.pulse.widgets.NetworkWidgetReceiver"
+            android:label="@string/widget_network_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_network" />
+        </receiver>
+        <!-- Widget settings: Pulse started on /widgets/configure. -->
+        <activity
+            android:name="com.example.pulse.widgets.WidgetConfigActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity="com.pranta.pulse.widgetconfig"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme" />
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
         <meta-data
             android:name="com.pranta.pulse.MONITOR_ICON"
             android:resource="@drawable/ic_stat_pulse" />

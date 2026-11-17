@@ -5,9 +5,10 @@ import com.example.pulse.NetworkInfoPlugin
 import io.flutter.embedding.engine.FlutterEngine
 import androidx.annotation.NonNull
 
-class MainActivity : FlutterActivity() {
+open class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         flutterEngine.plugins.add(NetworkInfoPlugin())
+        flutterEngine.plugins.add(com.example.pulse.widgets.WidgetsPlugin())
     }
 }

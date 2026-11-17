@@ -22,6 +22,11 @@ class Routes {
   static const settings = '/settings';
   static const about = '/settings/about';
   static const support = '/settings/support';
+  static const widgets = '/settings/widgets';
+
+  /// One home screen widget's settings: `?id=<appWidgetId>&kind=<WidgetKind>`;
+  /// `inApp=1` when opened from Settings rather than by the launcher.
+  static const widgetConfigure = '/widgets/configure';
   static const tools = '/tools';
 }
 
@@ -71,6 +76,7 @@ MobileTab tabFor(String location) {
 String? parentRoute(String location) {
   if (_under(location, Routes.about)) return Routes.settings;
   if (_under(location, Routes.support)) return Routes.settings;
+  if (_under(location, Routes.widgets)) return Routes.settings;
   if (_under(location, Routes.alertRule)) return Routes.alerts;
   if (_under(location, Routes.alerts)) return Routes.monitor;
   if (_under(location, Routes.pingDetail)) return Routes.ping;

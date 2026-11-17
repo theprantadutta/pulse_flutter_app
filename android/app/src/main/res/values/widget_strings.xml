@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_ping_label">Ping</string>
+    <string name="widget_ping_description">Live latency, a reply chart and stats for one host. Refresh pings in the background.</string>
+    <string name="widget_multiping_label">Multi-host ping</string>
+    <string name="widget_multiping_description">Up to six hosts side by side: your router, DNS and servers.</string>
+    <string name="widget_speed_label">Speed test</string>
+    <string name="widget_speed_description">Your latest download, upload and ping, with a button to run a new test.</string>
+    <string name="widget_monitor_label">Monitor</string>
+    <string name="widget_monitor_description">Monitor status: what is up or down, uptime and the last 24 hours.</string>
+    <string name="widget_actions_label">Quick actions</string>
+    <string name="widget_actions_description">Shortcuts to Ping, Speed test, Traceroute, LAN scan and more.</string>
+    <string name="widget_network_label">Network</string>
+    <string name="widget_network_description">Your connection: Wi-Fi, local and public address, router latency and DNS.</string>
+</resources>

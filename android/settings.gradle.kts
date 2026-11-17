@@ -23,6 +23,8 @@ plugins {
     id("com.google.gms.google-services") version("4.4.4") apply false
     // END: FlutterFire Configuration
     id("org.jetbrains.kotlin.android") version "2.4.21" apply false
+    // Compose compiler for the Jetpack Glance home screen widgets; keep in step with Kotlin.
+    id("org.jetbrains.kotlin.plugin.compose") version "2.4.21" apply false
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
 }
 

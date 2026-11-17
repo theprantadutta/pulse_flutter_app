@@ -20,9 +20,13 @@ import '../screens/splash/splash_screen.dart';
 import '../screens/speed/speed_screen.dart';
 import '../screens/tools/tools_hub_screen.dart';
 import '../screens/trace/trace_screen.dart';
+import '../screens/widgets/widget_config_screen.dart';
+import '../screens/widgets/widgets_screen.dart';
+import '../../services/widgets/home_widgets.dart';
 import 'destinations.dart';
 import 'pulse_shell.dart';
 import 'store_prompts.dart';
+import 'widget_links.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
@@ -98,10 +102,30 @@ final routerProvider = Provider<GoRouter>((ref) {
           child: SplashScreen(next: next),
         ),
       ),
+      // A home screen widget's settings. Outside the shell: the launcher opens
+      // it on its own (WidgetConfigActivity) to set up a new widget.
+      GoRoute(
+        path: Routes.widgetConfigure,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final q = state.uri.queryParameters;
+          return _page(
+            context,
+            state,
+            WidgetConfigScreen(
+              widgetId: int.tryParse(q['id'] ?? '') ?? 0,
+              kind: WidgetKind.byName(q['kind']) ?? WidgetKind.ping,
+              fromLauncher: q['inApp'] != '1',
+            ),
+          );
+        },
+      ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => StorePrompts(
-          child: PulseShell(location: state.uri.path, child: child),
+          child: WidgetLinks(
+            child: PulseShell(location: state.uri.path, child: child),
+          ),
         ),
         routes: [
           _route(Routes.ping, (s) => const PingScreen()),
@@ -120,6 +144,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           _route(Routes.settings, (s) => const SettingsScreen()),
           _route(Routes.about, (s) => const AboutScreen()),
           _route(Routes.support, (s) => const SupportScreen()),
+          _route(Routes.widgets, (s) => const WidgetsScreen()),
           _route(Routes.tools, (s) => const ToolsHubScreen()),
         ],
       ),

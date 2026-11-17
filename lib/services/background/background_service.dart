@@ -11,6 +11,7 @@ import '../../data/db/app_database.dart';
 import '../../data/settings_store.dart';
 import '../net/lan/oui.dart';
 import '../net/ping_prober.dart';
+import '../widgets/home_widgets.dart';
 import 'monitor_engine.dart';
 import 'notifications.dart';
 
@@ -68,6 +69,9 @@ class PulseMonitorTask extends TaskHandler {
       await _prefs?.reload();
       final report = await engine.runCycle();
       if (Platform.isAndroid) await engine.runLanWatch();
+      // The app's database streams don't see this isolate's writes, so the
+      // Monitor home screen widget is fed from here.
+      await PulseWidgets.publishMonitor(_db!, live: true);
       final text = _lastAlert != null && report.firing > 0 ? '▲ $_lastAlert' : report.summary;
       if (report.firing == 0) _lastAlert = null;
       await FlutterForegroundTask.updateService(
@@ -100,6 +104,8 @@ class PulseMonitorTask extends TaskHandler {
 
   @override
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
+    final db = _db;
+    if (db != null) await PulseWidgets.publishMonitor(db, live: false).catchError((Object _) {});
     await _db?.close();
     _db = null;
   }

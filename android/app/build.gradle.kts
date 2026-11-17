@@ -8,6 +8,8 @@ plugins {
     // END: FlutterFire Configuration
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Home screen widgets are Jetpack Glance (Compose) code.
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 // Release signing, as in Snake Classic: android/key.properties (git-ignored)
@@ -73,6 +75,8 @@ kotlin {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Widgets: Glance comes with home_widget; WorkManager runs their background refresh.
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
 }
 
 flutter {
