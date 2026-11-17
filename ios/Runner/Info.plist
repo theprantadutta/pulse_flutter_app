@@ -65,6 +65,18 @@
 		<array>
 			<string>fetch</string>
 		</array>
+		<!-- Home screen widgets open Pulse with pulse:// links (home_widget forwards them to Dart). -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.pranta.pulse.widgets</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>pulse</string>
+				</array>
+			</dict>
+		</array>
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
 			<string>prefs</string>

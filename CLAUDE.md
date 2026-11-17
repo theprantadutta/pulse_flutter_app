@@ -63,6 +63,23 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   (`in_app_review`) shows after 5 runs and 3 days, at most every 120 days and 3 times. "Rate Pulse" buttons open the
   store page instead (requestReview from a button may show nothing). Set `PulseShareConfig.appStoreId` once on iOS.
 
+### Home screen widgets (Nov 2026)
+- Six widgets on both platforms: Ping (one host), Multi-host ping (up to 6), Speed test, Monitor, Network, Quick actions.
+  Every size from 1×1 up (Android responsive Glance sizes; iOS small→extra large + Lock Screen; iOS 18 controls).
+- **Android:** Jetpack Glance in `android/app/src/main/kotlin/com/example/pulse/widgets/` (Compose compiler plugin in
+  Gradle; Glance comes with `home_widget`). Ping widgets ping natively (`/system/bin/ping`), no Flutter: ↻ runs
+  `RefreshPingAction`, `WidgetRefreshWorker` (WorkManager, ≥ 15 min) refreshes on each widget's interval. Settings per
+  widget: `WidgetConfigActivity` (a `MainActivity` subclass) opens Flutter on `/widgets/configure?id=&kind=`, which
+  saves `w.cfg.<id>` and calls `HomeWidget.finishHomeWidgetConfigure()`.
+- **iOS:** WidgetKit + App Intents in `ios/PulseWidgets/`, **not yet added to the Xcode project** — follow
+  `docs/IOS_WIDGETS.md` on a Mac (target, App Group `group.com.pranta.pulse`, entitlements, build).
+- **Dart:** `lib/services/widgets/home_widgets.dart` (`PulseWidgets`: keys, JSON shapes, monitor snapshot, per-widget
+  settings, `WidgetLink` parsing), `providers/widgets_provider.dart` (publishes theme, saved targets, speed results,
+  monitor while the app runs), the background monitor publishes Monitor after each cycle, `NetworkInfoNotifier`
+  publishes the public IP + gateway. `navigation/widget_links.dart` opens widget taps (`pulse://ping?host=`,
+  `speed?run=1`, `open?to=/route`). Settings › Appearance › Home screen widgets (`/settings/widgets`) lists and pins them.
+- Keys/JSON shapes are shared by Dart, `WidgetStore.kt` and `PulseShared.swift`; change all three together.
+
 ### Decisions made with the user
 - Persistence: **drift** (`lib/data/db/app_database.dart`, run `dart run build_runner build` after schema edits).
 - **No stubs anywhere.** Every screen/provider must be fully real: LAN scan, Monitor, Alerts, Geo IP, Packet loss

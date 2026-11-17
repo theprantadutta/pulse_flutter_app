@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../services/net/gateway.dart';
 import '../services/net/geo_ip.dart';
 import '../services/net/network_details.dart';
 import '../services/widgets/home_widgets.dart';
@@ -160,13 +161,16 @@ class NetworkInfoNotifier extends AsyncNotifier<NetworkSnapshot> {
     // Home screen Network widget: the public address it may show (nothing
     // when lookups are off) and the router it pings.
     final g = snap.geo;
+    // iOS link details carry no gateway; network_info_plus reads it there.
+    final gateway = base.link.gateway ?? (base.link.kind == LinkKind.wifi ? await Gateway.ipv4() : null);
+    if (gen != _generation) return;
     unawaited(
       PulseWidgets.publishNetwork(
         publicIp: lookups ? g?.ip : null,
         isp: lookups ? g?.isp ?? g?.org : null,
         city: lookups ? g?.city : null,
         country: lookups ? g?.country : null,
-        gateway: base.link.gateway,
+        gateway: gateway,
       ),
     );
   }
