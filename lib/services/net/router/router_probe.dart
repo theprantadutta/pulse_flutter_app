@@ -45,6 +45,7 @@ enum RouterBrand {
       final word = RegExp.escape(prefix ? k.substring(0, k.length - 1) : k);
       return RegExp('(^|[^a-z0-9])$word${prefix ? '' : r'($|[^a-z0-9])'}').hasMatch(hay);
     }
+
     for (final b in values) {
       if (b.keywords.any(has)) return b;
     }

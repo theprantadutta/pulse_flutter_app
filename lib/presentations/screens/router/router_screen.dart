@@ -5,10 +5,12 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/widgets/pulse/pulse.dart';
 import '../../../providers/network_provider.dart';
+import '../../../providers/router_manage_provider.dart';
 import '../../../providers/router_provider.dart';
 import '../../../services/net/router/router_probe.dart';
 import '../../../services/net/router/upnp_igd.dart';
 import '../../navigation/destinations.dart';
+import 'router_manage.dart';
 
 /// Router: Pulse's own view of the router on this network — who it is, the
 /// internet connection and live traffic it reports, UPnP port forwards, the
@@ -55,6 +57,7 @@ class RouterScreen extends ConsumerWidget {
 
   List<Widget> _sections(BuildContext context, WidgetRef ref, RouterProfile p) => [
     _Hero(profile: p),
+    ...routerManageSections(context, ref, p),
     if (p.igd != null) ...[
       const PulseSectionLabel('Internet'),
       _InternetCard(profile: p),
@@ -224,10 +227,7 @@ class _InternetCardState extends ConsumerState<_InternetCard> {
     final s = r?.status;
     if (r == null) {
       return const PulseCard(
-        child: SizedBox(
-          height: 120,
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        child: SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
       );
     }
     final connected = s!.connected;
@@ -390,10 +390,7 @@ class _PortForwards extends ConsumerWidget {
       children: [
         if (list.isLoading && items.isEmpty)
           const PulseCard(
-            child: SizedBox(
-              height: 56,
-              child: Center(child: CircularProgressIndicator()),
-            ),
+            child: SizedBox(height: 56, child: Center(child: CircularProgressIndicator())),
           )
         else if (items.isEmpty)
           PulseCard(
@@ -799,12 +796,19 @@ class _Capabilities extends StatelessWidget {
         item(true, 'Every setting, in the router page', 'Full router settings opens its own admin page, logged in.'),
         item(upnp, 'Internet status and live traffic', upnp ? 'Read from the router over UPnP.' : 'Needs UPnP on.'),
         item(upnp && p.igd!.canMap, 'Port forwards', upnp ? 'Add and remove over UPnP.' : 'Needs UPnP on.'),
-        item(
-          false,
-          'Devices, Wi-Fi and reboot in Pulse',
-          'Not in Pulse yet for ${p.brand == RouterBrand.unknown ? 'this router' : '${p.brand.label} routers'}. '
-              'Use Full router settings.',
-        ),
+        if (driverFor(p) != null)
+          item(
+            true,
+            'Devices, Wi-Fi and restart in Pulse',
+            'Signs in to your ${p.brand.label} with the saved login and shows them here.',
+          )
+        else
+          item(
+            false,
+            'Devices, Wi-Fi and restart in Pulse',
+            'Not in Pulse yet for ${p.brand == RouterBrand.unknown ? 'this router' : '${p.brand.label} routers'}. '
+                'Use Full router settings.',
+          ),
       ],
     );
   }
