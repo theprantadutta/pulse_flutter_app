@@ -12,6 +12,8 @@ import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.provideContent
 import androidx.glance.action.ActionParameters
+import androidx.glance.currentState
+import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
 import es.antonborri.home_widget.HomeWidgetGlanceWidgetReceiver
 
@@ -44,7 +46,10 @@ abstract class PulseWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val widgetId = runCatching { GlanceAppWidgetManager(context).getAppWidgetId(id) }.getOrDefault(AppWidgetManager.INVALID_APPWIDGET_ID)
         provideContent {
-            val store = WidgetStore(context)
+            // Reading the Glance state makes each update() recompose with fresh data
+            // (home_widget emits a new state object per update).
+            val state = currentState<HomeWidgetGlanceState>()
+            val store = WidgetStore(context, state.preferences)
             val config = store.config(widgetId)
             val env = WidgetEnv(context, widgetId, config, WidgetTheme.palette(context, config), store, store.isBusy(widgetId))
             Content(env)

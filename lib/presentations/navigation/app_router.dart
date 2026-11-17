@@ -94,6 +94,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     // and is what releases the native splash. Opening /monitor directly left
     // the first frame deferred forever, a blank screen.
     overridePlatformDefaultLocation: true,
+    // A widget link (pulse://…) that still reaches the router lands on Ping;
+    // WidgetLinks opens what it asked for.
+    redirect: (context, state) => state.uri.scheme == 'pulse' ? Routes.ping : null,
     routes: [
       GoRoute(
         path: Routes.launch,

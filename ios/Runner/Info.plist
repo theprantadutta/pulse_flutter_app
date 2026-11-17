@@ -66,6 +66,8 @@
 			<string>fetch</string>
 		</array>
 		<!-- Home screen widgets open Pulse with pulse:// links (home_widget forwards them to Dart). -->
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>

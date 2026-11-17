@@ -49,8 +49,17 @@ enum WidgetKind {
 
   static WidgetKind? byName(String? name) => WidgetKind.values.where((k) => k.name == name).firstOrNull;
 
+  /// [cls] may be short (`.widgets.PingWidgetReceiver`) or fully qualified.
   static WidgetKind? byAndroidClass(String? cls) =>
-      WidgetKind.values.where((k) => cls != null && (cls.endsWith(k.androidClass))).firstOrNull;
+      WidgetKind.values.where((k) => cls != null && cls.split('.').last == k.androidClass).firstOrNull;
+
+  /// What its settings screen changes (Settings › Home screen widgets).
+  String get settingsHint => switch (this) {
+    ping || multiping => 'Hosts, refresh and style',
+    network => 'Addresses, refresh and style',
+    actions => 'Shortcuts and style',
+    speed || monitor => 'Style',
+  };
 
   /// Kinds whose settings include hosts and a refresh interval.
   bool get pings => this == ping || this == multiping || this == network;

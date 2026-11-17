@@ -100,7 +100,7 @@ class NetworkWidget : PulseWidget() {
                         if (n.gateway != null) add(Triple("Router", n.gateway, routerMs))
                         if (size.height >= 150.dp || !wide) add(Triple("Public IP", publicIp, pub?.isp?.takeIf { wide }))
                         if (size.height >= 190.dp && n.dns.isNotEmpty()) add(Triple("DNS", n.dns.take(2).joinToString(", "), null))
-                        if (size.height >= 250.dp && n.rssi != null) add(Triple("Signal", "${n.rssi} dBm", n.linkMbps?.let { "$it Mbps link" }))
+                        if (size.height >= 180.dp && n.rssi != null) add(Triple("Signal", "${n.rssi} dBm", n.linkMbps?.let { "$it Mbps link" }))
                         if (size.height >= 250.dp && n.ipv6 != null) add(Triple("IPv6", if (env.config.showLocalIp) n.ipv6 else maskIp(n.ipv6), null))
                     }
                     val fit = ((size.height.value - 60) / (if (wide) 22 else 30)).toInt().coerceAtLeast(1)

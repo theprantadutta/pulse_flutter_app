@@ -118,7 +118,7 @@ class _WidgetsScreenState extends ConsumerState<WidgetsScreen> with WidgetsBindi
                   title: w.kind.label,
                   subtitle: Platform.isIOS
                       ? '${_family(w.iOSFamily)} · edit it on the Home Screen'
-                      : 'Tap to change hosts, refresh and style',
+                      : w.kind.settingsHint,
                   chevron: Platform.isAndroid,
                   onTap: Platform.isAndroid && w.androidId != null
                       ? () => context.push('${Routes.widgetConfigure}?id=${w.androidId}&kind=${w.kind.name}&inApp=1')

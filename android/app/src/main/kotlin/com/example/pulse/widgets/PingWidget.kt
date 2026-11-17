@@ -92,13 +92,13 @@ class PingWidget : PulseWidget() {
                     }
                     Spacer(GlanceModifier.defaultWeight())
                     Row(verticalAlignment = Alignment.Bottom) {
-                        Label(number, numberColor, if (number.length > 3) 28.sp else 36.sp, FontWeight.Bold)
+                        Label(number, numberColor, if (number.length > 3) 30.sp else 40.sp, FontWeight.Bold)
                         if (!lost && snap != null) Label(" ms", p.muted, 13.sp, modifier = GlanceModifier.padding(bottom = 6.dp))
                     }
                     Label(status, p.muted, 10.sp)
                     if (env.config.showChart && size.height >= 150.dp) {
                         Spacer(GlanceModifier.height(6.dp))
-                        Sparkline(snap?.samples ?: emptyList(), p, size.width - 28.dp, if (size.height >= 250.dp) 56.dp else 22.dp, maxBars = 16)
+                        Sparkline(snap?.samples ?: emptyList(), p, size.width - 28.dp, if (size.height >= 250.dp) 56.dp else 30.dp, maxBars = 16)
                     }
                     if (size.height >= 250.dp && snap != null) {
                         Spacer(GlanceModifier.height(8.dp))

@@ -11,7 +11,7 @@
     android:widgetCategory="home_screen"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/glance_default_loading_layout"
-    android:previewImage="@mipmap/ic_launcher"
+    android:previewImage="@drawable/widget_preview_multiping"
     android:description="@string/widget_multiping_description"
     android:configure="com.example.pulse.widgets.WidgetConfigActivity"
     android:widgetFeatures="reconfigurable" />

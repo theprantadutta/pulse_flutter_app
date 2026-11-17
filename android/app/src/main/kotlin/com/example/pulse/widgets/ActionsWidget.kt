@@ -13,6 +13,7 @@ import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -80,7 +81,7 @@ class ActionsWidget : PulseWidget() {
                 Column(GlanceModifier.fillMaxSize()) {
                     shown.chunked(cols).forEachIndexed { r, line ->
                         Row(GlanceModifier.fillMaxWidth().defaultWeight()) {
-                            line.forEachIndexed { c, t -> Tile(t, r * cols + c, labels, GlanceModifier.defaultWeight().fillMaxSize()) }
+                            line.forEachIndexed { c, t -> Tile(t, r * cols + c, labels, GlanceModifier.defaultWeight().fillMaxHeight()) }
                             repeat(cols - line.size) { Box(GlanceModifier.defaultWeight()) {} }
                         }
                     }

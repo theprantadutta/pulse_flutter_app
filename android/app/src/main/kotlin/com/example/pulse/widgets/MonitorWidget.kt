@@ -106,7 +106,8 @@ class MonitorWidget : PulseWidget() {
                     if (targets.isEmpty()) {
                         Label("Add a host to Monitor in Pulse to see its uptime and incidents here.", p.muted, 12.sp, maxLines = 3)
                     } else {
-                        val blocks = size.height >= 250.dp
+                        // 24 h blocks when tall, or when few targets leave the room.
+                        val blocks = size.height >= 250.dp || (size.height >= 180.dp && targets.size <= 3)
                         val rowH = if (blocks) 44 else 28
                         val fit = ((size.height.value - 64) / rowH).toInt().coerceIn(1, 7)
                         targets.take(fit).forEach { t -> TargetRow(t, p, compact = !blocks, width = size.width - 28.dp) }

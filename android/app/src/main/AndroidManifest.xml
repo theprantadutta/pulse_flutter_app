@@ -43,6 +43,10 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- Widget links (pulse://…) are routed by WidgetLinks via home_widget,
+                 not handed to the router as a platform route. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -139,6 +143,10 @@
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme" />
+            <!-- Widget links (pulse://…) are routed by WidgetLinks via home_widget,
+                 not handed to the router as a platform route. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>

@@ -206,8 +206,8 @@ data class ThemePrefs(val accent: String, val dynamic: Boolean, val mode: String
 
 fun JSONObject.optNum(key: String): Double? = if (isNull(key) || !has(key)) null else optDouble(key).takeIf { !it.isNaN() }
 
-class WidgetStore(context: Context) {
-    val prefs: SharedPreferences = context.getSharedPreferences(WidgetKeys.PREFS, Context.MODE_PRIVATE)
+class WidgetStore(context: Context, prefs: SharedPreferences? = null) {
+    val prefs: SharedPreferences = prefs ?: context.getSharedPreferences(WidgetKeys.PREFS, Context.MODE_PRIVATE)
 
     fun config(widgetId: Int) = WidgetConfig.parse(prefs.getString(WidgetKeys.config(widgetId), null))
 
@@ -234,7 +234,8 @@ class WidgetStore(context: Context) {
         return PublicIp(s("ip"), s("isp"), s("city"), s("country"))
     }
 
-    fun gateway(): String? = prefs.getString(WidgetKeys.GATEWAY, null)?.takeIf { it.isNotBlank() }
+    /** Stored as a JSON string by Dart, so it arrives quoted. */
+    fun gateway(): String? = prefs.getString(WidgetKeys.GATEWAY, null)?.trim('"')?.takeIf { it.isNotBlank() }
 
     fun targets(): List<Target> {
         val a = prefs.getString(WidgetKeys.TARGETS, null)?.let { runCatching { JSONArray(it) }.getOrNull() } ?: return emptyList()

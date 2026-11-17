@@ -60,7 +60,8 @@ class MultiPingWidget : PulseWidget() {
             return
         }
 
-        val rowsFit = ((size.height.value - 58) / 34).toInt().coerceIn(1, 6)
+        val rowH = if (size.height >= 250.dp) 36 else 30
+        val rowsFit = ((size.height.value - 54) / rowH).toInt().coerceIn(1, 6)
         val wide = size.width >= 250.dp
         WidgetFrame(p) {
             Column(GlanceModifier.fillMaxSize()) {
@@ -77,7 +78,7 @@ class MultiPingWidget : PulseWidget() {
                 snaps.take(rowsFit).forEach { (t, s) ->
                     val lost = s?.lastLost == true
                     Row(
-                        GlanceModifier.fillMaxWidth().height(34.dp).clickable(open(t)),
+                        GlanceModifier.fillMaxWidth().height(rowH.dp).clickable(open(t)),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Dot(if (s == null) p.timeout else if (lost) p.error else p.latency(s.last), 8.dp)
