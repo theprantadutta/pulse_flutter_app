@@ -77,6 +77,8 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // Widgets: Glance comes with home_widget; WorkManager runs their background refresh.
     implementation("androidx.work:work-runtime-ktx:2.12.0")
+    // enableEdgeToEdge() in MainActivity.
+    implementation("androidx.activity:activity-ktx:1.13.0")
 }
 
 flutter {
