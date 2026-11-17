@@ -83,7 +83,13 @@ void main() {
     );
   }
 
-  Future<List<String>> render(WidgetTester tester, String name, SpeedState state, {bool phoneOnly = false}) async {
+  Future<List<String>> render(
+    WidgetTester tester,
+    String name,
+    SpeedState state, {
+    bool phoneOnly = false,
+    Map<String, Size>? devices,
+  }) async {
     final c = (await tester.runAsync(() => seed(state)))!;
     final failures = await renderMatrix(
       tester,
@@ -91,7 +97,7 @@ void main() {
       c,
       const SpeedScreen(),
       location: '/speed',
-      devices: phoneOnly ? const {'phone': kPhone} : const {'phone': kPhone, 'tablet': kTablet},
+      devices: devices ?? (phoneOnly ? const {'phone': kPhone} : const {'phone': kPhone, 'tablet': kTablet}),
     );
     await tester.pumpWidget(const SizedBox());
     c.dispose();
@@ -125,6 +131,21 @@ void main() {
           progress: 1,
           colo: 'DAC',
         ),
+      ),
+      isEmpty,
+    );
+  });
+
+  // Galaxy Tab A9 portrait (~500 dp beside the rail) mid-test on a non-Cloudflare
+  // server: the long server pill plus Cancel used to overflow the header.
+  testWidgets('speed running on a portrait tablet', (tester) async {
+    final hetzner = kSpeedServers.firstWhere((x) => !x.isCloudflare);
+    expect(
+      await render(
+        tester,
+        'speed_tablet_portrait',
+        SpeedState(server: hetzner, phase: SpeedPhase.upload, liveMbps: 11, pingMs: 145, downMbps: 2.3, progress: .5),
+        devices: const {'tab_portrait': Size(601, 1005)},
       ),
       isEmpty,
     );

@@ -410,7 +410,9 @@ class _PulseShapeStatState extends State<PulseShapeStat> with SingleTickerProvid
           children: [
             shape,
             Padding(
-              padding: EdgeInsets.all(s * .14),
+              // Wider side inset: clover and cookie shapes dip in at mid-height,
+              // so a 3-digit value ("145 ms") would run past the edge.
+              padding: EdgeInsets.symmetric(horizontal: s * .2, vertical: s * .14),
               child: FittedBox(fit: BoxFit.scaleDown, child: content),
             ),
           ],

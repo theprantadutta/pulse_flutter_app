@@ -61,11 +61,17 @@ class _SpeedScreenState extends ConsumerState<SpeedScreen> {
     ref.watch(networkInfoProvider);
     final compact = context.isCompact;
 
-    final serverChip = _ServerChip(state: s, long: !compact, onTap: () => showSpeedServerSheet(context, ref));
-
     return LayoutBuilder(
       builder: (context, box) {
         final wide = !compact && box.maxWidth >= 760;
+        // The header holds the server pill and, while running, Cancel. The
+        // long label ("· upload via Cloudflare") only fits next to Cancel on
+        // wide layouts; a portrait tablet (~500 dp) overflowed mid-test.
+        final serverChip = _ServerChip(
+          state: s,
+          long: !compact && (wide || !s.running),
+          onTap: () => showSpeedServerSheet(context, ref),
+        );
         return PulsePage(
           title: 'Speed test',
           backTo: Routes.tools,
