@@ -42,17 +42,20 @@ struct NetworkNow {
     await withCheckedContinuation { (cont: CheckedContinuation<NWPath?, Never>) in
       let monitor = NWPathMonitor()
       let queue = DispatchQueue(label: "pulse.widgets.path")
-      var done = false
+      // A class box: the handlers below are @Sendable, so they can't mutate a
+      // captured var. Both run on the same serial queue.
+      final class Once { var done = false }
+      let once = Once()
       monitor.pathUpdateHandler = { path in
-        guard !done else { return }
-        done = true
+        guard !once.done else { return }
+        once.done = true
         monitor.cancel()
         cont.resume(returning: path)
       }
       monitor.start(queue: queue)
       queue.asyncAfter(deadline: .now() + 1.5) {
-        guard !done else { return }
-        done = true
+        guard !once.done else { return }
+        once.done = true
         monitor.cancel()
         cont.resume(returning: nil)
       }

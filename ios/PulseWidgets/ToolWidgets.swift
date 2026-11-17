@@ -38,12 +38,10 @@ struct ActionsWidgetView: View {
       .widgetURL(t.url)
       .accessibilityLabel(t.label)
     default:
-      let (cols, rows): (Int, Int) = switch family {
-      case .systemSmall: (2, 2)
-      case .systemMedium: (4, 2)
-      case .systemExtraLarge: (6, 3)
-      default: (3, 3)
-      }
+      // Plain ternaries: switch expressions and tuple patterns inside a
+      // @ViewBuilder body aren't reliably accepted by the result builder.
+      let cols = family == .systemSmall ? 2 : family == .systemMedium ? 4 : family == .systemExtraLarge ? 6 : 3
+      let rows = family == .systemSmall || family == .systemMedium ? 2 : 3
       let shown = Array(tools.prefix(cols * rows))
       let tones: [(Color, Color)] = [(p.hero, p.onHero), (p.secondaryContainer, p.onSecondaryContainer), (p.surfaceHigh, p.onSurface)]
       Grid(horizontalSpacing: 6, verticalSpacing: 6) {
@@ -52,7 +50,7 @@ struct ActionsWidgetView: View {
             ForEach(0..<cols, id: \.self) { c in
               let i = r * cols + c
               if i < shown.count {
-                let (bg, fg) = tones[i % tones.count]
+                let tone = tones[i % tones.count]
                 Link(destination: shown[i].url) {
                   VStack(spacing: 4) {
                     Image(systemName: shown[i].symbol).font(.system(size: 20, weight: .semibold))
@@ -60,9 +58,9 @@ struct ActionsWidgetView: View {
                       Text(shown[i].label).font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
                     }
                   }
-                  .foregroundStyle(fg)
+                  .foregroundStyle(tone.1)
                   .frame(maxWidth: .infinity, maxHeight: .infinity)
-                  .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(bg))
+                  .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(tone.0))
                 }
               } else {
                 Color.clear
@@ -132,20 +130,8 @@ struct NetworkWidgetView: View {
   @ViewBuilder
   private func content(_ p: Palette) -> some View {
     let n = entry.now
-    let symbol = switch n.kind {
-    case "wifi": "wifi"
-    case "cellular": "antenna.radiowaves.left.and.right"
-    case "ethernet": "cable.connector"
-    case "offline": "wifi.slash"
-    default: "globe"
-    }
-    let kindName = switch n.kind {
-    case "wifi": "Wi-Fi"
-    case "cellular": "Mobile data"
-    case "ethernet": "Ethernet"
-    case "offline": "Offline"
-    default: "Connected"
-    }
+    let symbol = Self.symbol(n.kind)
+    let kindName = Self.kindName(n.kind)
     let title = n.ssid ?? kindName
     let subtitle = [n.ssid != nil ? kindName : nil, n.vpn ? "VPN on" : nil, n.constrained ? "Low Data Mode" : nil]
       .compactMap { $0 }.joined(separator: " · ")
@@ -202,6 +188,26 @@ struct NetworkWidgetView: View {
         if large, let v6 = n.ipv6 { row(p, "IPv6", entry.config.showLocalIp ? v6 : Fmt.mask(v6), nil) }
         if large { Spacer(minLength: 0) }
       }
+    }
+  }
+
+  private static func symbol(_ kind: String) -> String {
+    switch kind {
+    case "wifi": "wifi"
+    case "cellular": "antenna.radiowaves.left.and.right"
+    case "ethernet": "cable.connector"
+    case "offline": "wifi.slash"
+    default: "globe"
+    }
+  }
+
+  private static func kindName(_ kind: String) -> String {
+    switch kind {
+    case "wifi": "Wi-Fi"
+    case "cellular": "Mobile data"
+    case "ethernet": "Ethernet"
+    case "offline": "Offline"
+    default: "Connected"
     }
   }
 

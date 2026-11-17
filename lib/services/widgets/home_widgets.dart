@@ -445,6 +445,7 @@ class PulseWidgets {
   // ---- Android: per-widget settings ----
 
   static Future<WidgetSettings> settingsFor(int widgetId, WidgetKind kind) async {
+    if (!supported) return WidgetSettings.defaultsFor(kind);
     await init();
     try {
       final raw = await HomeWidget.getWidgetData<String>(kConfig(widgetId));

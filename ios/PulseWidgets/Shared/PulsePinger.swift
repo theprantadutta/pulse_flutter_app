@@ -40,7 +40,7 @@ enum PulsePinger {
   }
 
   private static func resolve(_ host: String) -> sockaddr_storage? {
-    var hints = addrinfo(ai_flags: AI_DEFAULT, ai_family: AF_UNSPEC, ai_socktype: SOCK_DGRAM,
+    var hints = addrinfo(ai_flags: AI_V4MAPPED_CFG | AI_ADDRCONFIG, ai_family: AF_UNSPEC, ai_socktype: SOCK_DGRAM,
                          ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
     var res: UnsafeMutablePointer<addrinfo>?
     guard getaddrinfo(host, nil, &hints, &res) == 0, let first = res else { return nil }

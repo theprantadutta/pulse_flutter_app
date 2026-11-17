@@ -160,7 +160,7 @@ struct SpeedWidget: Widget {
 extension SpeedSnapshot {
   static let sample = SpeedSnapshot(
     at: Date().timeIntervalSince1970 * 1000 - 600_000, down: 248, up: 61, ping: 12, jitter: 2.1, server: "Cloudflare DAC",
-    history: [248, 231, 190, 260, 222, 240].enumerated().map { SpeedRun(at: Double($0.offset), down: $0.element, up: 60, ping: 12) })
+    history: ([248, 231, 190, 260, 222, 240] as [Double]).enumerated().map { SpeedRun(at: Double($0.offset), down: $0.element, up: 60, ping: 12) })
 }
 
 // MARK: - Monitor

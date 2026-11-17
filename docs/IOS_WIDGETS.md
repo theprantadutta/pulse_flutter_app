@@ -2,7 +2,7 @@
 
 **Status (Nov 2026):** all Swift code is written, but none of it has been built yet: it was written on Windows,
 where Xcode isn't available. A Mac session must add the widget extension target to the Xcode project, turn
-on the capabilities below, build, and fix any compile errors. Android is done and tested (Jetpack Glance,
+on the capabilities below, build, and fix any compile errors. Android uses Jetpack Glance (
 `android/app/src/main/kotlin/com/example/pulse/widgets/`).
 
 ## What exists
@@ -68,6 +68,14 @@ inside the extension (interactive widgets, iOS 17). Run on the Speed widget open
   `WidgetLink.parse` (lib/services/widgets/home_widgets.dart) and `WidgetLinks` (navigation) route them.
 - Dart calls `HomeWidget.updateWidget(iOSName: <kind>)` with the kinds in `WidgetKinds` (`PulsePingWidget`, …); keep
   the names in sync if you rename anything.
+- Swift language mode: the code assumes **Swift 5** (Xcode 16's default for a new target). In Swift 6 mode the
+  `static var` members of the intents and enums (`title`, `typeDisplayRepresentation`, …) must become `static let`.
+- If `WidgetBundleBuilder` rejects `if #available(iOS 18.0, *)` in `PulseWidgetsBundle`, move the two controls into
+  an `@available(iOS 18.0, *)` sub-bundle.
+- `OpenPulseToolIntent` (the controls) opens the app; if tapping a control does nothing, add
+  `PulseWidgetsBundle.swift`'s intent (and `Intents.swift` for `PulseTool`) to the Runner target too.
+- Long `? :` chains in the views (e.g. `status` in PingWidgets.swift) may hit "unable to type-check in reasonable
+  time"; split them into separate `let`s if so.
 - Optional: to list placed widgets with their settings in Settings › Home screen widgets, call
   `HomeWidgetPlugin.setConfigurationLookup(to: [...])` in `AppDelegate` with each kind's intent type (and add
   `Intents.swift` to the Runner target as well). It already lists them without that, minus the settings.

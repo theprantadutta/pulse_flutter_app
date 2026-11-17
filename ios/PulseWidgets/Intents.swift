@@ -146,8 +146,8 @@ struct MultiPingConfig: WidgetConfigurationIntent {
   static var description = IntentDescription("Router, DNS and servers side by side.")
 
   @Parameter(
-    title: "Hosts", size: [.systemSmall: 3, .systemMedium: 4, .systemLarge: 6, .systemExtraLarge: 6, .accessoryRectangular: 3],
-    default: [PulseHostEntity.router, .cloudflare, .google, .quad9])
+    title: "Hosts", default: [PulseHostEntity.router, .cloudflare, .google, .quad9],
+    size: [.systemSmall: 3, .systemMedium: 4, .systemLarge: 6, .systemExtraLarge: 6, .accessoryRectangular: 3])
   var hosts: [PulseHostEntity]
   @Parameter(title: "Refresh", default: .m30) var interval: RefreshInterval
   @Parameter(title: "Pings per refresh", default: 4, inclusiveRange: (1, 10)) var probes: Int
