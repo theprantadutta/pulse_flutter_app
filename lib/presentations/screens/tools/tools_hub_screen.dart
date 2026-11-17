@@ -18,7 +18,7 @@ class ToolsHubScreen extends ConsumerWidget {
     return PulsePage(
       title: 'Tools',
       large: true,
-      subtitle: compact ? null : '8 tools · tap to open',
+      subtitle: compact ? null : '${kTools.length} tools · tap to open',
       actions: [
         if (compact)
           PulseIconButton(
@@ -58,6 +58,9 @@ class ToolsHubScreen extends ConsumerWidget {
                 tool: kTools[i],
                 status: status[kTools[i]] ?? ToolStatus(kTools[i].empty),
                 large: !compact,
+                // Short tablet tiles (e.g. five rows in portrait) use a smaller
+                // badge and title so the content fits.
+                dense: !compact && tileHeight < 185,
               ),
             ),
           );
@@ -70,11 +73,14 @@ class ToolsHubScreen extends ConsumerWidget {
 /// A tool tile: badge top-left, name and last result at the bottom. Monitor is
 /// pink with a blinking "LIVE" label while monitoring runs.
 class ToolTile extends StatelessWidget {
-  const ToolTile({super.key, required this.tool, required this.status, this.large = false});
+  const ToolTile({super.key, required this.tool, required this.status, this.large = false, this.dense = false});
 
   final PulseTool tool;
   final ToolStatus status;
   final bool large;
+
+  /// A large tile with less height: smaller badge, padding and title.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +88,7 @@ class ToolTile extends StatelessWidget {
     final hot = status.live;
     final fg = hot ? c.onPrimaryFixed : c.onSurface;
     final sub = hot ? c.onPrimaryFixed : c.onSurfaceVariant;
-    final badgeSize = large ? 72.0 : 44.0;
+    final badgeSize = large ? (dense ? 54.0 : 72.0) : 44.0;
     final radius = hot ? (large ? 36.0 : 32.0) : 28.0;
     return Semantics(
       button: true,
@@ -93,7 +99,7 @@ class ToolTile extends StatelessWidget {
         radius: radius,
         color: hot ? c.primaryFixedDim : c.surfaceContainer,
         child: Padding(
-          padding: large ? const EdgeInsets.all(22) : const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: large ? EdgeInsets.all(dense ? 18 : 22) : const EdgeInsets.fromLTRB(16, 14, 16, 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -132,7 +138,12 @@ class ToolTile extends StatelessWidget {
                     tool.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: pulseText(large ? 28 : 19, 800, wdth: large ? 115 : 110, height: 1.15).copyWith(color: fg),
+                    style: pulseText(
+                      large ? (dense ? 24 : 28) : 19,
+                      800,
+                      wdth: large ? 115 : 110,
+                      height: 1.15,
+                    ).copyWith(color: fg),
                   ),
                   const SizedBox(height: 2),
                   Text(

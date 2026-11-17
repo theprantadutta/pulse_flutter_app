@@ -52,7 +52,15 @@ void main() {
 
   testWidgets('tools hub', (tester) async {
     final c = (await tester.runAsync(seed))!;
-    final failures = await renderMatrix(tester, 'tools', c, const ToolsHubScreen(), location: '/tools');
+    final failures = await renderMatrix(
+      tester,
+      'tools',
+      c,
+      const ToolsHubScreen(),
+      location: '/tools',
+      // tab_portrait: Galaxy Tab A9 portrait, where nine tools make five short rows.
+      devices: const {'phone': kPhone, 'tablet': kTablet, 'tab_portrait': Size(601, 1005)},
+    );
     await tester.pumpWidget(const SizedBox());
     c.dispose();
     await tester.pump(const Duration(seconds: 1));
