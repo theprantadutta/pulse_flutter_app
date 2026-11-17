@@ -117,6 +117,14 @@ const kTools = <PulseTool>[
     session: SessionTool.geo,
   ),
   kMonitorTool,
+  PulseTool(
+    name: 'Router',
+    route: Routes.router,
+    icon: PulseIcons.router,
+    shape: PulseShape.cookie7,
+    tone: PulseTone.lime,
+    empty: 'Status, port forwards, settings',
+  ),
 ];
 
 /// The catalogue entry for a History session type.

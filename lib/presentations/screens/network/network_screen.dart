@@ -15,6 +15,7 @@ import '../../../data/models/session_tool.dart';
 import '../../../providers/connection_provider.dart';
 import '../../../providers/database_provider.dart';
 import '../../../providers/network_provider.dart';
+import '../../../providers/router_provider.dart';
 import '../../../services/net/network_details.dart';
 import '../../navigation/destinations.dart';
 import '../lan/shape_wobble.dart';
@@ -238,6 +239,7 @@ class _NarrowBody extends StatelessWidget {
       if (!offline) ...[
         if (!context.isCompact) const _ScanCard(),
         _DetailsList(details: _linkDetails(l)),
+        if (l.gateway != null) const _RouterRow(),
         _InternetHeader(snap: snap),
         _DetailsList(details: _internetDetails(snap)),
       ],
@@ -308,6 +310,7 @@ class _WideBody extends StatelessWidget {
                 child: ListView(
                   children: [
                     _DetailsList(details: _linkDetails(l), large: true),
+                    if (l.gateway != null) ...[const SizedBox(height: PulseLayout.section), const _RouterRow()],
                     _InternetHeader(snap: snap),
                     _DetailsList(details: _internetDetails(snap), large: true),
                   ],
@@ -1021,6 +1024,48 @@ class _DetailTile extends StatelessWidget {
             if (trailing != null) trailing else const SizedBox(width: 12, height: 48),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "Your router" entry into the Router screen (status, port forwards and the
+/// router's own settings page).
+class _RouterRow extends ConsumerWidget {
+  const _RouterRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(routerProfileProvider).value;
+    final c = context.colors;
+    return PulseCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      onTap: () => context.push(Routes.router),
+      child: Row(
+        children: [
+          const PulseShapeBadge(shape: PulseShape.cookie7, tone: PulseTone.lime, icon: PulseIcons.router, size: 44),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p?.name ?? 'Your router',
+                  style: context.type.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Status, port forwards and router settings',
+                  style: context.type.bodyMedium!.copyWith(color: c.onSurfaceVariant),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          PulseIcon(PulseIcons.chevR, size: 20, color: c.onSurfaceVariant),
+        ],
       ),
     );
   }

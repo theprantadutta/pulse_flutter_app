@@ -19,6 +19,8 @@ import '../screens/settings/support_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/speed/speed_screen.dart';
 import '../screens/tools/tools_hub_screen.dart';
+import '../screens/router/router_admin_screen.dart';
+import '../screens/router/router_screen.dart';
 import '../screens/trace/trace_screen.dart';
 import '../screens/widgets/widget_config_screen.dart';
 import '../screens/widgets/widgets_screen.dart';
@@ -105,6 +107,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           child: SplashScreen(next: next),
         ),
       ),
+      // The router's own admin page, full screen (a web view needs the room).
+      GoRoute(
+        path: Routes.routerAdmin,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => _page(context, state, const RouterAdminScreen()),
+      ),
       // A home screen widget's settings. Outside the shell: the launcher opens
       // it on its own (WidgetConfigActivity) to set up a new widget.
       GoRoute(
@@ -148,6 +156,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           _route(Routes.about, (s) => const AboutScreen()),
           _route(Routes.support, (s) => const SupportScreen()),
           _route(Routes.widgets, (s) => const WidgetsScreen()),
+          _route(Routes.router, (s) => const RouterScreen()),
           _route(Routes.tools, (s) => const ToolsHubScreen()),
         ],
       ),
