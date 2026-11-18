@@ -15,9 +15,14 @@ List<Widget> routerManageSections(BuildContext context, WidgetRef ref, RouterPro
   if (ref.watch(routerDriverTypeProvider).value == null) return const [];
   final cred = ref.watch(routerCredentialProvider).value;
   if (cred == null) return [const SizedBox(height: 12), _SignInCard(profile: p)];
+  if (ref.watch(routerSignedOutProvider).contains(p.id)) {
+    return [const SizedBox(height: 12), _SignInCard(profile: p, savedLogin: cred)];
+  }
   final m = ref.watch(routerManageProvider);
   return switch (m) {
     AsyncData(value: final v?) => [
+      const SizedBox(height: 12),
+      _AccountBar(profile: p),
       if (v.overview != null) ...[const PulseSectionLabel('Router'), _Overview(o: v.overview!)],
       if (v.features.contains(RouterFeature.clients)) ...[
         PulseSectionLabel('Devices · ${v.clients.length}'),
@@ -70,8 +75,11 @@ List<Widget> routerManageSections(BuildContext context, WidgetRef ref, RouterPro
 }
 
 class _SignInCard extends ConsumerWidget {
-  const _SignInCard({required this.profile});
+  const _SignInCard({required this.profile, this.savedLogin});
   final RouterProfile profile;
+
+  /// Set after signing out with the password still saved: one tap signs in.
+  final RouterCredential? savedLogin;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -95,7 +103,9 @@ class _SignInCard extends ConsumerWidget {
               label: 'Sign in to router',
               icon: PulseIcons.shield,
               style: PulseButtonStyle.pink,
-              onPressed: () => editRouterLogin(context, ref, profile, null),
+              onPressed: savedLogin != null
+                  ? () => ref.read(routerSignedOutProvider.notifier).set(profile.id, false)
+                  : () => editRouterLogin(context, ref, profile, null),
             ),
           ),
           const SizedBox(height: 10),
@@ -453,6 +463,52 @@ class _Actions extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+/// "Signed in" with Sign out (keeps a saved password) and Forget password.
+class _AccountBar extends ConsumerWidget {
+  const _AccountBar({required this.profile});
+  final RouterProfile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final saved = ref.watch(routerLoginSavedProvider).value ?? false;
+    return PulseCard(
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+      child: Row(
+        children: [
+          PulseIcon(PulseIcons.check, size: 20, color: c.tertiary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Signed in to the router', style: context.type.titleSmall),
+                Text(
+                  saved ? 'Password saved on this device' : 'Password not saved',
+                  style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              // Ends the session (the manager signs out of the router as it
+              // disposes); a saved password stays for a one-tap sign-in.
+              if (saved) {
+                ref.read(routerSignedOutProvider.notifier).set(profile.id, true);
+              } else {
+                ref.read(sessionRouterLoginProvider.notifier).remove(profile.id);
+              }
+              showPulseToast(context, 'Signed out of the router', icon: PulseIcons.check);
+            },
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
     );
   }
 }

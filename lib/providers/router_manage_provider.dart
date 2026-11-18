@@ -65,6 +65,7 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     final login = await ref.watch(routerCredentialProvider.future);
     final type = await ref.watch(routerDriverTypeProvider.future);
     if (profile == null || type == null || login == null) return null;
+    if (ref.watch(routerSignedOutProvider).contains(profile.id)) return null;
     final driver = type.create(profile.gateway);
     _driver = driver;
     ref.onDispose(() {

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../presentations/screens/ping/ping_configure.dart' show gatewayProvider;
 import '../services/net/router/router_probe.dart';
 import '../services/net/router/upnp_igd.dart';
+import 'settings_provider.dart' show sharedPreferencesProvider;
 
 /// The router on the current network, re-detected when the gateway changes.
 /// Null when there is no router (offline, mobile data).
@@ -95,6 +96,23 @@ class SessionRouterLogins extends Notifier<Map<String, RouterCredential>> {
   void put(String routerId, RouterCredential c) => state = {...state, routerId: c};
 
   void remove(String routerId) => state = {...state}..remove(routerId);
+}
+
+/// Routers the person signed out of (by id). Pulse doesn't sign in to them
+/// again until they tap Sign in, even with a saved password. Persisted, so a
+/// sign-out survives restarting Pulse.
+final routerSignedOutProvider = NotifierProvider<RouterSignedOut, Set<String>>(RouterSignedOut.new);
+
+class RouterSignedOut extends Notifier<Set<String>> {
+  static const _key = 'router.signedOut';
+
+  @override
+  Set<String> build() => {...?ref.read(sharedPreferencesProvider).getStringList(_key)};
+
+  void set(String routerId, bool signedOut) {
+    state = signedOut ? {...state, routerId} : ({...state}..remove(routerId));
+    ref.read(sharedPreferencesProvider).setStringList(_key, state.toList());
+  }
 }
 
 /// The login for the current router: this session's, else the saved one.

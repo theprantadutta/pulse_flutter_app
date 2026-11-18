@@ -691,7 +691,7 @@ class _LoginCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 IntrinsicWidth(
                   child: PulseButton(
-                    label: saved ? 'Forget' : 'Sign out',
+                    label: saved ? 'Forget password' : 'Sign out',
                     icon: PulseIcons.trash,
                     style: PulseButtonStyle.outlined,
                     size: PulseButtonSize.small,
