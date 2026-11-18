@@ -138,7 +138,7 @@ class _AdminWebViewState extends ConsumerState<_AdminWebView> {
     if (!mounted) return request.onCancel();
     final user = TextEditingController();
     final pass = TextEditingController();
-    var remember = true;
+    var remember = false; // saving is opt-in
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -160,8 +160,8 @@ class _AdminWebViewState extends ConsumerState<_AdminWebView> {
               ),
               CheckboxListTile(
                 value: remember,
-                onChanged: (v) => setState(() => remember = v ?? true),
-                title: const Text('Save on this device'),
+                onChanged: (v) => setState(() => remember = v ?? false),
+                title: const Text('Remember on this device'),
                 contentPadding: EdgeInsets.zero,
               ),
             ],
@@ -174,10 +174,13 @@ class _AdminWebViewState extends ConsumerState<_AdminWebView> {
       ),
     );
     if (ok == true) {
+      final login = RouterCredential(user.text.trim(), pass.text);
       if (remember) {
-        await RouterVault.write(p.id, RouterCredential(user.text.trim(), pass.text));
-        ref.invalidate(routerCredentialProvider);
+        await RouterVault.write(p.id, login);
+      } else {
+        ref.read(sessionRouterLoginProvider.notifier).put(p.id, login);
       }
+      ref.invalidate(routerCredentialProvider);
       request.onProceed(WebViewCredential(user: user.text.trim(), password: pass.text));
     } else {
       request.onCancel();

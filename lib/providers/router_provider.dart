@@ -82,8 +82,31 @@ final portMappingsProvider = FutureProvider.autoDispose<List<PortMapping>>((ref)
   return UpnpIgd.mappings(igd);
 });
 
-/// The saved login for the current router, if any.
+/// Logins used without saving ("Remember on this device" off): kept in memory
+/// until Pulse closes, by router id.
+final sessionRouterLoginProvider = NotifierProvider<SessionRouterLogins, Map<String, RouterCredential>>(
+  SessionRouterLogins.new,
+);
+
+class SessionRouterLogins extends Notifier<Map<String, RouterCredential>> {
+  @override
+  Map<String, RouterCredential> build() => const {};
+
+  void put(String routerId, RouterCredential c) => state = {...state, routerId: c};
+
+  void remove(String routerId) => state = {...state}..remove(routerId);
+}
+
+/// The login for the current router: this session's, else the saved one.
 final routerCredentialProvider = FutureProvider.autoDispose<RouterCredential?>((ref) async {
   final p = await ref.watch(routerProfileProvider.future);
-  return p == null ? null : RouterVault.read(p.id);
+  if (p == null) return null;
+  return ref.watch(sessionRouterLoginProvider)[p.id] ?? await RouterVault.read(p.id);
+});
+
+/// Whether the current router's login is saved in the keystore (vs this session only).
+final routerLoginSavedProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final p = await ref.watch(routerProfileProvider.future);
+  ref.watch(routerCredentialProvider);
+  return p != null && await RouterVault.read(p.id) != null;
 });

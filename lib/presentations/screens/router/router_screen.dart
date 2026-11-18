@@ -266,16 +266,20 @@ class _InternetCardState extends ConsumerState<_InternetCard> {
                 ),
               ],
             ),
-            // A few readings first, so the chart doesn't start as two lonely bars.
-            if (r.history.length >= 4) ...[
-              const SizedBox(height: 12),
-              PulseBars(
-                values: [for (final h in r.history) h.$1],
-                height: 48,
-                fill: true,
-                semanticLabel: 'Download over the last two minutes',
-              ),
-            ],
+            // Fixed layout: always 40 equal slots (empty ones on the left until
+            // readings arrive) and a scale that steps 1-2-5-10… instead of
+            // following every peak, so nothing grows or shrinks between polls.
+            const SizedBox(height: 12),
+            PulseBars(
+              values: [
+                for (var i = r.history.length; i < _slots; i++) null,
+                for (final h in r.history.skip(r.history.length > _slots ? r.history.length - _slots : 0)) h.$1,
+              ],
+              max: _niceCeiling(r.history.map((h) => h.$1)),
+              height: 48,
+              fill: true,
+              semanticLabel: 'Download over the last two minutes',
+            ),
             const SizedBox(height: 4),
             Text(
               'Everything on your network, measured by the router',
@@ -313,6 +317,21 @@ class _InternetCardState extends ConsumerState<_InternetCard> {
     bool pow2(int v) => v > 0 && (v & (v - 1)) == 0;
     if (down == null || down <= 0) return false;
     return !(pow2(down) && (up == null || pow2(up)));
+  }
+
+  static const _slots = 40;
+
+  /// The smallest 1-2-5 × 10ⁿ bit rate above every reading (min 1 Mbps), so the
+  /// chart's scale only changes when traffic crosses a step.
+  static double _niceCeiling(Iterable<double> values) {
+    final peak = values.fold(0.0, (a, b) => b > a ? b : a);
+    var step = 1e6;
+    while (true) {
+      for (final m in const [1, 2, 5]) {
+        if (peak <= step * m) return step * m;
+      }
+      step *= 10;
+    }
   }
 
   static String _mask(String ip) {
@@ -621,6 +640,7 @@ class _LoginCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final cred = ref.watch(routerCredentialProvider).value;
+    final saved = ref.watch(routerLoginSavedProvider).value ?? false;
     return PulseCard(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Column(
@@ -634,10 +654,17 @@ class _LoginCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(cred == null ? 'No login saved' : 'Login saved', style: context.type.titleMedium),
                     Text(
                       cred == null
-                          ? 'Save it once and Pulse fills it in on the router page.'
+                          ? 'Not signed in'
+                          : saved
+                          ? 'Login saved'
+                          : 'Signed in for this session',
+                      style: context.type.titleMedium,
+                    ),
+                    Text(
+                      cred == null
+                          ? 'Sign in so Pulse can manage the router and fill in its page.'
                           : cred.username.isEmpty
                           ? 'Password only'
                           : 'User "${cred.username}"',
@@ -653,7 +680,7 @@ class _LoginCard extends ConsumerWidget {
             children: [
               IntrinsicWidth(
                 child: PulseButton(
-                  label: cred == null ? 'Save login' : 'Change',
+                  label: cred == null ? 'Sign in' : 'Change',
                   icon: cred == null ? PulseIcons.plus : PulseIcons.edit,
                   style: PulseButtonStyle.tonal,
                   size: PulseButtonSize.small,
@@ -664,12 +691,13 @@ class _LoginCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 IntrinsicWidth(
                   child: PulseButton(
-                    label: 'Forget',
+                    label: saved ? 'Forget' : 'Sign out',
                     icon: PulseIcons.trash,
                     style: PulseButtonStyle.outlined,
                     size: PulseButtonSize.small,
                     onPressed: () async {
                       await RouterVault.delete(profile.id);
+                      ref.read(sessionRouterLoginProvider.notifier).remove(profile.id);
                       ref.invalidate(routerCredentialProvider);
                       if (context.mounted) showPulseToast(context, 'Router login removed', icon: PulseIcons.trash);
                     },
@@ -680,7 +708,7 @@ class _LoginCard extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Kept only on this device, in the system keystore. Pulse sends it to nothing but your router.',
+            "Pulse only saves the login if you tick 'Remember on this device'; then it stays in the system keystore and goes nowhere but your router.",
             style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
           ),
         ],
@@ -694,6 +722,9 @@ Future<void> editRouterLogin(BuildContext context, WidgetRef ref, RouterProfile 
   final user = TextEditingController(text: current?.username ?? '');
   final pass = TextEditingController(text: current?.password ?? '');
   var hide = true;
+  // Off unless the person ticks it (or it was already saved).
+  var remember = current != null && await RouterVault.read(p.id) != null;
+  if (!context.mounted) return;
   final saved = await showDialog<bool>(
     context: context,
     builder: (context) => StatefulBuilder(
@@ -720,6 +751,20 @@ Future<void> editRouterLogin(BuildContext context, WidgetRef ref, RouterProfile 
                 child: Text('Leave it empty if your router only asks for a password.', style: muted),
               ),
               _PasswordField(controller: pass, hidden: hide, fill: fill, onToggle: () => setState(() => hide = !hide)),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                value: remember,
+                onChanged: (v) => setState(() => remember = v ?? false),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Remember on this device'),
+                subtitle: Text(
+                  remember
+                      ? 'Saved in the system keystore, sent only to your router.'
+                      : 'Used until you close Pulse, then forgotten.',
+                  style: muted,
+                ),
+              ),
             ],
           ),
           actions: [
@@ -731,9 +776,22 @@ Future<void> editRouterLogin(BuildContext context, WidgetRef ref, RouterProfile 
     ),
   );
   if (saved == true && pass.text.isNotEmpty) {
-    await RouterVault.write(p.id, RouterCredential(user.text.trim(), pass.text));
+    final login = RouterCredential(user.text.trim(), pass.text);
+    if (remember) {
+      await RouterVault.write(p.id, login);
+      ref.read(sessionRouterLoginProvider.notifier).remove(p.id);
+    } else {
+      await RouterVault.delete(p.id);
+      ref.read(sessionRouterLoginProvider.notifier).put(p.id, login);
+    }
     ref.invalidate(routerCredentialProvider);
-    if (context.mounted) showPulseToast(context, 'Router login saved on this device', icon: PulseIcons.check);
+    if (context.mounted) {
+      showPulseToast(
+        context,
+        remember ? 'Router login saved on this device' : 'Signed in for this session only',
+        icon: PulseIcons.check,
+      );
+    }
   }
   user.dispose();
   pass.dispose();
