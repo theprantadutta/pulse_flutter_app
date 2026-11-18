@@ -80,7 +80,7 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   `speed?run=1`, `open?to=/route`). Settings › Appearance › Home screen widgets (`/settings/widgets`) lists and pins them.
 - Keys/JSON shapes are shared by Dart, `WidgetStore.kt` and `PulseShared.swift`; change all three together.
 
-### Router control (branch `feature/router-control`, not merged)
+### Router control (shipped in 1.2.0)
 - Plan: `docs/ROUTER_ANY_ROUTER_PLAN.md` (support ladder, verified capabilities, drivers, safety rules). Feasibility:
   `docs/ROUTER_CONTROL_RESEARCH.md`. Code: `lib/services/net/router/` (probe, UPnP IGD, drivers + registry),
   `providers/router_provider.dart`, `router_manage_provider.dart`, `screens/router/`.
@@ -92,6 +92,12 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   router is NOT the TP-Link AX53 (check `RouterProbe` / the gateway's UPnP description), that's the home router: identify
   it, see which driver probes answer (`detectRouterDriver`), record fixtures, run read tests, and ask the owner before
   any write.
+- Tools hub: Router is the wide card under the 8 tools (`kRouterTool`). Router pages: hub, Devices, Wi-Fi, Internet
+  (connection type), Port forwards. Changes go through `runRouterAction` (Try it / read-back / "Did it work?");
+  reports go to pulse-rust-api `/api/v1/router/*` unless Settings › Privacy › "Share router results" is off. Never
+  retry a sign-in automatically (routers lock the admin out) and never force-sign-out another session without asking.
+- Store screenshots for router screens: `flutter test test/render/store_screens_test.dart` + `python tools/store_shots.py`
+  (sample data only). Listing text: `docs/PLAY_STORE_LISTING.md`.
 - Router logins are saved only when the user ticks "Remember on this device" (default off); otherwise in memory for
   the session. Feature verification is meant to be crowd-sourced through the backend (owner's decision): ask users
   whether an action worked and store verified/unverified per driver + model + firmware + feature.
@@ -146,10 +152,10 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   C++/WinRT channel (`windows/runner/startup_task.cpp`); unpackaged builds keep the HKCU Run key. Windows only lets the
   user re-enable a task they switched off in Task Manager › Startup apps.
 - Toast activation: `toast_activator.clsid` must equal the `guid` in `lib/services/background/notifications.dart`.
-- Version: `msix_version` must end in `.0` for the Store; keep it in step with `version:` (currently 1.1.0.0 / 1.1.0+4; bump the build number for every Play upload).
+- Version: `msix_version` must end in `.0` for the Store; keep it in step with `version:` (currently 1.2.0.0 / 1.2.0+5; bump the build number for every Play upload).
 - Policies (Store listing): https://legal.pranta.dev/pulse/privacy and https://legal.pranta.dev/pulse/terms, served
   from `G:\Personal\MyProjects\privacy-project\Projects\pulse\` (push to master → auto-deploys). Current versions:
-  privacy 1.2, terms 1.2 (Nov 13, 2026); bump them and the dates whenever data use, services or permissions change.
+  privacy 1.3, terms 1.3 (Nov 18, 2026: router control, saved router logins, anonymous router results); bump them and the dates whenever data use, services or permissions change.
 - STILL NEEDED from the user: a Partner Center account and the reserved app name; then copy Package/Identity/Name →
   `identity_name`, Package/Identity/Publisher (CN=…) → `publisher`, PublisherDisplayName → `publisher_display_name`,
   set `display_name` to the reserved name, and add that name to `displayNames` in privacy-project `Program.cs` if it
