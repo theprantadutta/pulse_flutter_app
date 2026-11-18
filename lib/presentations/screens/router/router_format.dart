@@ -55,7 +55,7 @@ String? signalLabel(int? dbm) {
 PulseIcons deviceIcon(RouterClient d) {
   final k = '${d.kind ?? ''} ${d.name ?? ''}'.toLowerCase();
   bool has(List<String> w) => w.any(k.contains);
-  if (has(['phone', 'iphone', 'android', 'galaxy', 'pixel', 'redmi'])) return PulseIcons.phone;
+  if (has(['phone', 'mobile', 'iphone', 'android', 'galaxy', 'pixel', 'redmi'])) return PulseIcons.phone;
   if (has(['tablet', 'ipad', 'tab '])) return PulseIcons.tablet;
   if (has(['tv', 'chromecast', 'roku', 'firestick', 'fire tv'])) return PulseIcons.tv;
   if (has(['printer', 'print'])) return PulseIcons.printer;

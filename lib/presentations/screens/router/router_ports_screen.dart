@@ -105,9 +105,10 @@ class _PortForwards extends ConsumerWidget {
             children: [
               for (final m in items)
                 PulseListItem(
-                  title: '${m.protocol} ${m.externalPort} → ${m.internalClient}:${m.internalPort}',
+                  title: m.description.isEmpty ? '${m.protocol} ${m.externalPort}' : m.description,
+                  subtitleMaxLines: 2,
                   subtitle: [
-                    m.description.isEmpty ? 'No description' : m.description,
+                    '${m.protocol} ${m.externalPort} → ${m.internalClient}:${m.internalPort}',
                     if (!m.enabled) 'off',
                     if (m.leaseSeconds > 0) 'expires in ${fmtUptime(Duration(seconds: m.leaseSeconds))}',
                   ].join(' · '),
@@ -123,25 +124,23 @@ class _PortForwards extends ConsumerWidget {
             ],
           ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            IntrinsicWidth(
-              child: PulseButton(
-                label: 'Add port forward',
-                icon: PulseIcons.plus,
-                style: PulseButtonStyle.tonal,
-                size: PulseButtonSize.small,
-                onPressed: () => _add(context, ref, igd),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Through UPnP: some routers only accept forwards to the device asking.',
-                style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
-              ),
-            ),
-          ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: PulseButton(
+            label: 'Add port forward',
+            icon: PulseIcons.plus,
+            style: PulseButtonStyle.tonal,
+            size: PulseButtonSize.small,
+            onPressed: () => _add(context, ref, igd),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Added through UPnP. Some routers only accept forwards to the device that asks.',
+            style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
+          ),
         ),
       ],
     );

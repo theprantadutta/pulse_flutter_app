@@ -201,6 +201,7 @@ class _DeviceRow extends StatelessWidget {
     return PulseListItem(
       title: d.name ?? d.ip ?? d.mac,
       subtitle: [linkLabel(d), if (d.ip != null && d.name != null) d.ip!, ?signalLabel(d.signal)].join(' · '),
+      subtitleMaxLines: 2,
       leading: deviceBadge(context, d),
       onTap: () => showDeviceSheet(context, d),
       trailing: busy

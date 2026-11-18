@@ -216,7 +216,9 @@ class _Hero extends ConsumerWidget {
     final live = p.igd != null ? ref.watch(routerLiveProvider).value : null;
     final online = o?.internet ?? live?.status.connected;
     final model = o == null ? null : routerModel(o);
-    final sub = [if (model != null && model != p.name) model, p.gateway];
+    // Skip the model when the name already says it ("TP-Link Archer AX53 1.0").
+    final named = o?.model != null && p.name.toLowerCase().contains(o!.model!.toLowerCase());
+    final sub = [if (model != null && !named) model, p.gateway];
     final clients = managed?.clients ?? const <RouterClient>[];
     final hasClientRates = clients.any((d) => d.downBps != null);
     // With UPnP the Internet card below shows live traffic; don't repeat it.
@@ -1107,7 +1109,8 @@ class _InternetCardState extends ConsumerState<_InternetCard> {
             const SizedBox(height: 12),
             PulseBars(
               values: [
-                for (var i = r.history.length; i < _slots; i++) null,
+                // Slots without a reading yet sit on the baseline, not as dots.
+                for (var i = r.history.length; i < _slots; i++) 0.0,
                 for (final h in r.history.skip(r.history.length > _slots ? r.history.length - _slots : 0)) h.$1,
               ],
               max: _niceCeiling(r.history.map((h) => h.$1)),
@@ -1155,11 +1158,11 @@ class _InternetCardState extends ConsumerState<_InternetCard> {
 
   static const _slots = 40;
 
-  /// The smallest 1-2-5 × 10ⁿ bit rate above every reading (min 1 Mbps), so the
+  /// The smallest 1-2-5 × 10ⁿ bit rate above every reading (min 100 kbps), so the
   /// chart's scale only changes when traffic crosses a step.
   static double _niceCeiling(Iterable<double> values) {
     final peak = values.fold(0.0, (a, b) => b > a ? b : a);
-    var step = 1e6;
+    var step = 1e5;
     while (true) {
       for (final m in const [1, 2, 5]) {
         if (peak <= step * m) return step * m;
