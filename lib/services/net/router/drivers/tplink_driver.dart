@@ -576,16 +576,14 @@ class TplinkDriver implements RouterDriver {
 
   @override
   Future<void> setWifi(WifiNetwork network, {bool? enabled, String? ssid, String? password}) async {
-    final id = network.id;
-    final onlyEnable = ssid == null && password == null;
-    // Enable-only writes use bare keys; other changes use the prefixed form
-    // the web UI sends (wireless_2g_ssid…).
-    String k(String name) => onlyEnable ? name : '${id}_$name';
-    await _request('admin/wireless?form=$id', {
+    // One band's own form takes bare keys (enable, ssid, psk_key). The web UI
+    // sends band-prefixed keys only to its combined multi-form URL; prefixed
+    // keys on a single form are accepted and silently ignored.
+    await _request('admin/wireless?form=${network.id}', {
       'operation': 'write',
-      if (enabled != null) k('enable'): enabled ? 'on' : 'off',
-      k('ssid'): ?ssid,
-      k('psk_key'): ?password,
+      if (enabled != null) 'enable': enabled ? 'on' : 'off',
+      'ssid': ?ssid,
+      'psk_key': ?password,
     });
   }
 
