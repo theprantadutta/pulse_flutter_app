@@ -5,6 +5,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:pointycastle/export.dart';
 
 import '../router_probe.dart';
@@ -349,6 +350,10 @@ class TplinkDriver implements RouterDriver {
     }
     throw RouterDriverException(RouterErrorKind.unexpected, code.isEmpty ? path : '$path: $code');
   }
+
+  /// One raw call (diagnostics and fixture recording only; the UI never uses it).
+  @visibleForTesting
+  Future<dynamic> rawCall(String path, String operation) => _request(path, {'operation': operation});
 
   Future<Map<String, dynamic>> _read(String path) async {
     final d = await _request(path, {'operation': 'read'});

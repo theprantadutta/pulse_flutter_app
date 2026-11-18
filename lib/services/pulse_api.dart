@@ -46,13 +46,14 @@ class PulseApi {
     String path,
     Object body, {
     Duration timeout = const Duration(seconds: 6),
+    Map<String, String> headers = const {},
   }) async {
     _requireKey();
     final bytes = utf8.encode(jsonEncode(body));
     final res = await _client
         .post(
           Uri.parse('$_base$path'),
-          headers: {'content-type': 'application/json', ...signHeaders('POST', path, bytes)},
+          headers: {'content-type': 'application/json', ...headers, ...signHeaders('POST', path, bytes)},
           body: bytes,
         )
         .timeout(timeout);
@@ -64,7 +65,7 @@ class PulseApi {
   }
 
   Map<String, dynamic> _decode(http.Response res) {
-    if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode >= 200 && res.statusCode < 300) return jsonDecode(res.body) as Map<String, dynamic>;
     final code = switch (res.statusCode) {
       401 => 'rejected the request (check the device clock)',
       429 => 'is busy, try again in a minute',
