@@ -117,15 +117,19 @@ const kTools = <PulseTool>[
     session: SessionTool.geo,
   ),
   kMonitorTool,
-  PulseTool(
-    name: 'Router',
-    route: Routes.router,
-    icon: PulseIcons.router,
-    shape: PulseShape.cookie7,
-    tone: PulseTone.lime,
-    empty: 'Status, port forwards, settings',
-  ),
+  kRouterTool,
 ];
+
+/// Router is the Tools hub's wide card (it manages the router rather than
+/// running a test), listed last everywhere else.
+const kRouterTool = PulseTool(
+  name: 'Router',
+  route: Routes.router,
+  icon: PulseIcons.router,
+  shape: PulseShape.cookie7,
+  tone: PulseTone.lime,
+  empty: 'Devices, Wi-Fi, internet, restart',
+);
 
 /// The catalogue entry for a History session type.
 PulseTool toolForSession(SessionTool session) =>
