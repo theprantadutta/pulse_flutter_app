@@ -417,7 +417,8 @@ class TplinkDriver implements RouterDriver {
       firmware: _s(fw['firmware_version']),
       wanIp: _s(s['wan_ipv4_ipaddr']),
       wanGateway: _s(s['wan_ipv4_gateway']),
-      wanType: _s(s['conn_type']),
+      // Some firmware reports a numeric code here instead of dhcp/pppoe/…; skip it.
+      wanType: int.tryParse('${s['conn_type'] ?? ''}') == null ? _s(s['conn_type']) : null,
       wanUptime: up == null ? null : Duration(seconds: up),
       lanIp: _s(s['lan_ipv4_ipaddr']),
       wanMac: _s(s['wan_macaddr']),
@@ -508,6 +509,8 @@ class TplinkDriver implements RouterDriver {
       }
       if (d.isEmpty) continue;
       Object? v(String k) => d['${form}_$k'] ?? d[k];
+      // Bands the hardware lacks (6 GHz on a dual-band model) come back empty.
+      if (_s(v('ssid')) == null && _bool(v('enable')) != true) continue;
       final band = form.endsWith('2g')
           ? WifiBand.b24
           : form.endsWith('5g')

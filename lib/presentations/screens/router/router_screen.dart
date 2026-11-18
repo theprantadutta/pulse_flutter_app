@@ -266,13 +266,16 @@ class _InternetCardState extends ConsumerState<_InternetCard> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            PulseBars(
-              values: [for (final h in r.history) h.$1],
-              height: 48,
-              fill: true,
-              semanticLabel: 'Download over the last two minutes',
-            ),
+            // A few readings first, so the chart doesn't start as two lonely bars.
+            if (r.history.length >= 4) ...[
+              const SizedBox(height: 12),
+              PulseBars(
+                values: [for (final h in r.history) h.$1],
+                height: 48,
+                fill: true,
+                semanticLabel: 'Download over the last two minutes',
+              ),
+            ],
             const SizedBox(height: 4),
             Text(
               'Everything on your network, measured by the router',

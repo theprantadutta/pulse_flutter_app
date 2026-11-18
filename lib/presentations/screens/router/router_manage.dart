@@ -182,11 +182,7 @@ class _OverviewState extends State<_Overview> {
             ),
             const SizedBox(height: 12),
           ],
-          if (o.model != null || o.firmware != null)
-            row(
-              'Model',
-              [o.model, if (o.hardwareVersion != null) 'v${o.hardwareVersion}'].whereType<String>().join(' '),
-            ),
+          if (o.model != null || o.firmware != null) row('Model', _model(o)),
           if (o.firmware != null) row('Firmware', o.firmware!),
           if (o.wanIp != null)
             row(
@@ -208,6 +204,15 @@ class _OverviewState extends State<_Overview> {
         ],
       ),
     );
+  }
+
+  /// "Archer AX53 v1.0": the hardware version alone when it already names
+  /// the model, else model + version.
+  static String _model(RouterOverview o) {
+    final hw = o.hardwareVersion;
+    if (hw == null) return o.model ?? '';
+    if (o.model == null || hw.toLowerCase().contains(o.model!.toLowerCase())) return hw;
+    return '${o.model} ${RegExp(r'^\d').hasMatch(hw) ? 'v$hw' : hw}';
   }
 
   static String _wanType(String t) => switch (t.toLowerCase()) {
