@@ -234,9 +234,13 @@ class RouterTrustPill extends ConsumerWidget {
     if (t == ActionTrust.verified) return const SizedBox.shrink();
     final mine = caps?.mine[action];
     return Tooltip(
+      // A tap explains it (it's a label, not a button).
+      triggerMode: TooltipTriggerMode.tap,
+      showDuration: const Duration(seconds: 4),
       message: mine == true
-          ? 'Worked for you; not confirmed by enough people yet'
-          : 'Not confirmed for this router model yet; Pulse checks afterwards',
+          ? 'Worked for you, but not confirmed by enough people yet.'
+          : 'Not confirmed for this router model yet. Make the change below; Pulse checks the router afterwards '
+                'and asks whether it worked.',
       child: PulsePill(mine == true ? 'Worked for you' : 'Try it', tone: PulsePillTone.outline),
     );
   }
