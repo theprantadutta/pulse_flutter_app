@@ -19,6 +19,7 @@ const kRetentionDaysKey = 'wire.data.retention_days';
 const kExportFormatKey = 'wire.data.export_format';
 const kExportFolderKey = 'wire.data.export_folder';
 const kPublicIpLookupsKey = 'wire.privacy.public_ip';
+const kRouterReportsKey = 'wire.privacy.router_reports';
 const kLanDeviceWatchKey = 'wire.monitor.lan_watch';
 const kMonitorPausedKey = 'wire.monitor.paused';
 const kAlertsMutedUntilKey = 'wire.alerts.muted_until';

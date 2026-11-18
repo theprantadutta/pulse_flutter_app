@@ -55,6 +55,11 @@ dependencies:
   in_app_update: ^5.0.0
   in_app_review: ^2.0.12
   home_widget: 0.10.0
+  webview_flutter: ^4.14.1
+  flutter_secure_storage: ^11.2.0
+  xml: ^7.0.1
+  pointycastle: ^4.0.0
+  qr: 4.0.1
 
 dev_dependencies:
   flutter_test:
@@ -98,7 +103,7 @@ msix_config:
   publisher_display_name: Pranta Dutta
   identity_name: com.pranta.pulse
   msix_version: 1.1.0.0
-  description: Network diagnostics and monitoring - ping, traceroute, port scan, speed test, LAN scan and alerts.
+  description: Network diagnostics, monitoring and router control - ping, traceroute, port scan, speed test, LAN scan, alerts and your router.
   languages: en-us
   logo_path: assets/brand/icon/master/pulse_icon_rounded_1024.png
   capabilities: internetClient,privateNetworkClientServer,location

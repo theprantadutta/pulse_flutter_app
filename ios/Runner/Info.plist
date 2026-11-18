@@ -83,16 +83,11 @@
 		<array>
 			<string>prefs</string>
 		</array>
+		<!-- Router admin pages are plain HTTP on the LAN (the in-app router page). -->
 		<key>NSAppTransportSecurity</key>
 		<dict>
-			<key>NSExceptionDomains</key>
-			<dict>
-				<key>ip-api.com</key>
-				<dict>
-					<key>NSExceptionAllowsInsecureHTTPLoads</key>
-					<true/>
-				</dict>
-			</dict>
+			<key>NSAllowsLocalNetworking</key>
+			<true/>
 		</dict>
 		<key>UIStatusBarHidden</key>
 		<false/>
