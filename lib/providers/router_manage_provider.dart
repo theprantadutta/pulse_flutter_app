@@ -154,7 +154,9 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     if (d == null || cur == null) return;
     try {
       final c = await d.clients();
-      state = AsyncData(cur.copyWith(clients: c, at: DateTime.now()));
+      // Build on the state as it is now: a change made while this ran (Wi-Fi,
+      // internet) must not be overwritten with the copy from before it.
+      state = AsyncData((state.value ?? cur).copyWith(clients: c, at: DateTime.now()));
     } on Object {
       // Keep the last list; a full refresh shows errors.
     }
