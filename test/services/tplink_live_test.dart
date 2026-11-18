@@ -12,7 +12,9 @@ import 'package:pulse/services/net/router/router_probe.dart';
 /// Against a real TP-Link router on this network: one sign-in with a wrong
 /// password. A "wrong password" answer (with attempts left) proves the router
 /// decrypted Pulse's request, i.e. the protocol works, without a real login.
-/// With PULSE_ROUTER_PASSWORD set it signs in for real and reads everything.
+/// With PULSE_ROUTER_PASSWORD set (environment, or a line in the git-ignored
+/// `.env` at the project root) it signs in for real and reads everything.
+/// The password is never printed.
 void main() {
   test('TP-Link protocol check', () async {
     final gw = await Gateway.ipv4();
@@ -20,7 +22,7 @@ void main() {
       markTestSkipped('No TP-Link LuCI router here');
       return;
     }
-    final real = Platform.environment['PULSE_ROUTER_PASSWORD'];
+    final real = _routerPassword();
     final d = TplinkDriver(gw);
     if (real == null) {
       try {
@@ -36,8 +38,10 @@ void main() {
     await d.signIn(RouterCredential('', real));
     try {
       final o = await d.overview();
-      stdout.writeln('model ${o.model} hw ${o.hardwareVersion} fw ${o.firmware} cpu ${o.cpu} mem ${o.memory} '
-          'wan ${o.wanType} up ${o.wanUptime}');
+      stdout.writeln(
+        'model ${o.model} hw ${o.hardwareVersion} fw ${o.firmware} cpu ${o.cpu} mem ${o.memory} '
+        'wan ${o.wanType} up ${o.wanUptime}',
+      );
       final c = await d.clients();
       stdout.writeln('clients: ${c.length}');
       for (final w in await d.wifi()) {
@@ -48,4 +52,23 @@ void main() {
       await d.signOut();
     }
   }, timeout: const Timeout(Duration(seconds: 90)));
+}
+
+/// PULSE_ROUTER_PASSWORD from the environment, else from `.env` (KEY=VALUE
+/// lines; quotes optional). Only that key is read.
+String? _routerPassword() {
+  final env = Platform.environment['PULSE_ROUTER_PASSWORD'];
+  if (env != null && env.isNotEmpty) return env;
+  final f = File('.env');
+  if (!f.existsSync()) return null;
+  for (final line in f.readAsLinesSync()) {
+    final t = line.trim();
+    if (!t.startsWith('PULSE_ROUTER_PASSWORD=')) continue;
+    var v = t.substring('PULSE_ROUTER_PASSWORD='.length).trim();
+    if (v.length >= 2 && ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))) {
+      v = v.substring(1, v.length - 1);
+    }
+    return v.isEmpty ? null : v;
+  }
+  return null;
 }
