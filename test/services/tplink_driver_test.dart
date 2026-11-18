@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pointycastle/export.dart';
 import 'package:pulse/services/net/router/drivers/tplink_driver.dart';
@@ -18,11 +19,12 @@ Uint8List _bytes(BigInt v, int len) {
 }
 
 AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> _keys(int bits) {
-  final rnd = FortunaRandom()..seed(KeyParameter(Uint8List.fromList(List.generate(32, (_) => Random.secure().nextInt(256)))));
+  final rnd = FortunaRandom()
+    ..seed(KeyParameter(Uint8List.fromList(List.generate(32, (_) => Random.secure().nextInt(256)))));
   final gen = RSAKeyGenerator()
     ..init(ParametersWithRandom(RSAKeyGeneratorParameters(BigInt.from(65537), bits, 64), rnd));
   final p = gen.generateKeyPair();
-  return AsymmetricKeyPair(p.publicKey as RSAPublicKey, p.privateKey as RSAPrivateKey);
+  return AsymmetricKeyPair(p.publicKey, p.privateKey);
 }
 
 String _rsaDecrypt(String hex, RSAPrivateKey key) {
@@ -72,5 +74,36 @@ void main() {
     expect(blocks.every((b) => b.length <= 53), isTrue);
     expect(s.decrypt(data), 'operation=login');
     expect(_big(Uint8List(0)), BigInt.zero);
+  });
+
+  test('SG: digits key/IV, OAEP login sign, HMAC request sign with per-request hash', () {
+    final kp = _keys(2048);
+    final s = TplinkSession(n: kp.publicKey.modulus!, e: kp.publicKey.exponent!, seq: 500, hash: 'h0', sg: true);
+    expect(RegExp(r'^\d{16}$').hasMatch(s.key), isTrue);
+    expect(RegExp(r'^\d{16}$').hasMatch(s.iv), isTrue);
+
+    // Login: OAEP blocks of the key size decrypt to k/i/h/s.
+    final login = Uri.splitQueryString(s.envelope('operation=login', login: true));
+    final oaep = OAEPEncoding(RSAEngine())..init(false, PrivateKeyParameter<RSAPrivateKey>(kp.privateKey));
+    final sign = login['sign']!;
+    final parts = [
+      for (var i = 0; i < sign.length; i += 512)
+        utf8.decode(oaep.process(_bytes(BigInt.parse(sign.substring(i, i + 512), radix: 16), 256))),
+    ];
+    expect(parts.join(), 'k=${s.key}&i=${s.iv}&h=h0&s=${500 + login['data']!.length}');
+
+    // Request: hash = SHA-256(encrypted data), sign = HMAC-SHA256 chunks keyed by k/i.
+    final req = Uri.splitQueryString(s.envelope('operation=read'));
+    final data = req['data']!;
+    final h = sha256.convert(utf8.encode(data)).toString();
+    expect(s.hash, h);
+    final str = 'h=$h&s=${500 + data.length}';
+    final mac = Hmac(sha256, utf8.encode('k=${s.key}&i=${s.iv}'));
+    final want = StringBuffer();
+    for (var p = 0; p < str.length; p += 53) {
+      want.write(mac.convert(utf8.encode(str.substring(p, p + 53 > str.length ? str.length : p + 53))));
+    }
+    expect(req['sign'], want.toString());
+    expect(s.decrypt(data), 'operation=read');
   });
 }

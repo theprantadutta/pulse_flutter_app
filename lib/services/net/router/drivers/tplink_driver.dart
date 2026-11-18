@@ -35,6 +35,11 @@ class TplinkDriver implements RouterDriver {
   String? _sysauth;
   bool _encrypted = true;
   bool _jsonBodies = true;
+  bool _sg = false;
+
+  /// Over HTTPS the web UI sends plain form data (TLS protects it); firmware
+  /// such as the Archer AX53 1.11 rejects the AES envelope there.
+  bool _plain = false;
   TplinkSession? _session;
   RouterCredential? _login;
 
@@ -82,6 +87,11 @@ class TplinkDriver implements RouterDriver {
       req.headers
         ..set(HttpHeaders.contentTypeHeader, contentType)
         ..contentLength = bytes.length;
+      // Current firmware answers "no such callback" without the web UI's Referer.
+      if ((_sg || _plain) && _base != null) {
+        req.headers.set(HttpHeaders.refererHeader, '$_base/webpages/index.html');
+        if (_stok.isNotEmpty) req.headers.set('Origin', '$_base');
+      }
       if (_sysauth != null) req.cookies.add(Cookie('sysauth', _sysauth!));
       req.add(bytes);
       final res = await req.close().timeout(const Duration(seconds: 15));
@@ -114,9 +124,7 @@ class TplinkDriver implements RouterDriver {
     for (final scheme in const ['https', 'http']) {
       final base = Uri.parse('$scheme://$host');
       try {
-        final r = await _post(
-          base.replace(path: '/cgi-bin/luci/;stok=/login', query: 'form=keys&operation=read'),
-        );
+        final r = await _post(base.replace(path: '/cgi-bin/luci/;stok=/login', query: 'form=keys&operation=read'));
         final j = _json(r.body);
         final pw = (j['data'] as Map?)?['password'];
         if (j['success'] == true && pw is List && pw.length >= 2) {
@@ -139,8 +147,29 @@ class TplinkDriver implements RouterDriver {
     _login = login;
     _stok = '';
     _sysauth = null;
+    _sg = false;
+    _plain = false;
     final pwd = await _findBase();
     final encPwd = TplinkRsa.pkcs1Hex(login.password, pwd.n, pwd.e);
+
+    // HTTPS: plain form login, exactly what the web page sends over TLS.
+    if (_base!.scheme == 'https') {
+      _plain = true;
+      _encrypted = false;
+      _jsonBodies = false;
+      _session = null;
+      final r = await _post(
+        _url('login', 'login?form=login', stok: ''),
+        body: 'password=$encPwd&operation=login&confirm=true',
+      );
+      final j = _json(r.body);
+      if (_accept(j, r.cookies)) return;
+      if (!'${j['errorcode'] ?? ''}'.contains('no such callback')) _loginError(j);
+      _plain = false; // this firmware wants the encrypted envelope even over HTTPS
+      _jsonBodies = true;
+    }
+
+    if (await _isSg()) return _signInSg(login, encPwd);
 
     // AES-session login (what the web UI does when `form=auth` exists).
     Map<String, dynamic>? auth;
@@ -175,6 +204,47 @@ class TplinkDriver implements RouterDriver {
     _session = null;
     final r = await _post(_url('login', 'login?form=login', stok: ''), body: 'operation=login&password=$encPwd');
     final j = _json(r.body);
+    if (_accept(j, r.cookies)) return;
+    _loginError(j);
+  }
+
+  /// SG-certified firmware ("SG CLS L1 STAGE2" / "EU CE RED") uses the SG
+  /// scheme; the device config page says so without a login.
+  Future<bool> _isSg() async {
+    _sg = true; // send the web UI headers for this probe
+    try {
+      final r = await _post(_url('login', 'device_config?form=config', stok: ''), body: 'operation=read');
+      final certs = ((_json(r.body)['data'] as Map?)?['certification'] as List?)?.map((e) => '$e') ?? const [];
+      return certs.any((c) => c.contains('SG CLS L1') || c.contains('CE RED'));
+    } on RouterDriverException catch (e) {
+      if (e.kind == RouterErrorKind.network) rethrow;
+      return false;
+    } finally {
+      _sg = false;
+    }
+  }
+
+  Future<void> _signInSg(RouterCredential login, String encPwd) async {
+    _sg = true;
+    final r0 = await _post(_url('login', 'login?form=auth&operation=read', stok: ''));
+    final auth = _json(r0.body)['data'];
+    if (auth is! Map || auth['key'] is! List || auth['seq'] == null) {
+      throw const RouterDriverException(RouterErrorKind.unsupported);
+    }
+    final key = auth['key'] as List;
+    _session = TplinkSession(
+      n: BigInt.parse('${key[0]}', radix: 16),
+      e: BigInt.parse('${key[1]}', radix: 16),
+      seq: int.parse('${auth['seq']}'),
+      hash: sha256.convert(utf8.encode(username + login.password)).toString(),
+      sg: true,
+    );
+    _encrypted = true;
+    final r = await _post(
+      _url('login', 'login?form=login', stok: ''),
+      body: _session!.envelope('operation=login&password=$encPwd&confirm=true', login: true),
+    );
+    final j = _decrypt(_json(r.body));
     if (_accept(j, r.cookies)) return;
     _loginError(j);
   }
@@ -243,11 +313,12 @@ class TplinkDriver implements RouterDriver {
     if (_stok.isEmpty) throw const RouterDriverException(RouterErrorKind.unexpected, 'not signed in');
     // The operation also goes in the URL (some firmware reads it there);
     // other values stay in the (encrypted) body, never in the URL.
+    // SG firmware rejects a key present in both the URL and the body, and
+    // takes form-encoded bodies.
     final op = params['operation'];
-    final full = op == null || path.contains('operation=') ? path : '$path&operation=$op';
-    final plain = _jsonBodies
-        ? jsonEncode(params)
-        : params.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    final full = _sg || _plain || op == null || path.contains('operation=') ? path : '$path&operation=$op';
+    final form = params.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    final plain = _jsonBodies && !_sg && !_plain ? jsonEncode(params) : form;
     final body = _encrypted ? _session!.envelope(plain) : plain;
     final r = await _post(
       _url('admin', full),
@@ -267,7 +338,7 @@ class TplinkDriver implements RouterDriver {
       return _request(path, params, retry: false);
     }
     // Older firmware wants form-encoded bodies: switch once and retry.
-    if (_jsonBodies && retry) {
+    if (_jsonBodies && !_sg && !_plain && retry) {
       _jsonBodies = false;
       try {
         return await _request(path, params, retry: false);
@@ -509,22 +580,39 @@ class TplinkDriver implements RouterDriver {
   }
 }
 
-/// AES session of the encrypted variant: random 16-character key and IV,
+/// AES session of the encrypted variants: random 16-character key and IV,
 /// the router's signing key and sequence number.
-/// Visible for tests (crypto round-trips).
+///
+/// Classic: key/IV are hex, the sign is RSA PKCS#1 v1.5 over
+/// `k=…&i=…&h=MD5(user+password)&s=seq+len` (login) or `h=…&s=…`.
+/// SG (firmware certified "SG CLS L1 STAGE2" / "EU CE RED", e.g. Archer AX53):
+/// key/IV are 16 random digits, the hash is SHA-256(user+password), the login
+/// sign is RSA-OAEP (SHA-1), and every later request replaces the hash with
+/// SHA-256 of its encrypted data and signs `h=…&s=…` with HMAC-SHA256 keyed by
+/// `k=…&i=…`. Visible for tests (crypto round-trips).
 class TplinkSession {
-  TplinkSession({required this.n, required this.e, required this.seq, required this.hash}) : key = _hex16(), iv = _hex16();
+  TplinkSession({required this.n, required this.e, required this.seq, required this.hash, this.sg = false})
+    : key = sg ? _digits16() : _hex16(),
+      iv = sg ? _digits16() : _hex16();
 
   final BigInt n;
   final BigInt e;
   final int seq;
-  final String hash;
+  final bool sg;
   final String key;
   final String iv;
+
+  /// MD5/SHA-256 of user+password; SG replaces it per request.
+  String hash;
 
   static String _hex16() {
     final r = Random.secure();
     return List.generate(8, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  static String _digits16() {
+    final r = Random.secure();
+    return List.generate(16, (_) => r.nextInt(10)).join();
   }
 
   CBCBlockCipher _cipher(bool forEncryption) => CBCBlockCipher(AESEngine())
@@ -560,10 +648,28 @@ class TplinkSession {
   /// `sign=…&data=…` for a request body.
   String envelope(String plain, {bool login = false}) {
     final data = encrypt(plain);
-    final s = login ? 'k=$key&i=$iv&h=$hash&s=${seq + data.length}' : 'h=$hash&s=${seq + data.length}';
     final sign = StringBuffer();
-    for (var p = 0; p < s.length; p += 53) {
-      sign.write(TplinkRsa.pkcs1Hex(s.substring(p, min(p + 53, s.length)), n, e));
+    if (!sg) {
+      final s = login ? 'k=$key&i=$iv&h=$hash&s=${seq + data.length}' : 'h=$hash&s=${seq + data.length}';
+      for (var p = 0; p < s.length; p += 53) {
+        sign.write(TplinkRsa.pkcs1Hex(s.substring(p, min(p + 53, s.length)), n, e));
+      }
+    } else if (login) {
+      final s = 'k=$key&i=$iv&h=$hash&s=${seq + data.length}';
+      // OAEP (SHA-1) carries 42 bytes of overhead; the web UI's 53-character
+      // chunks only fit keys of 1024 bits and up.
+      final k = (n.bitLength + 7) ~/ 8;
+      final step = min(53, k - 42);
+      for (var p = 0; p < s.length; p += step) {
+        sign.write(TplinkRsa.oaepHex(s.substring(p, min(p + step, s.length)), n, e));
+      }
+    } else {
+      hash = sha256.convert(utf8.encode(data)).toString();
+      final s = 'h=$hash&s=${seq + data.length}';
+      final mac = Hmac(sha256, utf8.encode('k=$key&i=$iv'));
+      for (var p = 0; p < s.length; p += 53) {
+        sign.write(mac.convert(utf8.encode(s.substring(p, min(p + 53, s.length)))).toString());
+      }
     }
     return 'sign=$sign&data=${Uri.encodeQueryComponent(data)}';
   }
@@ -590,5 +696,16 @@ class TplinkRsa {
       x = (x << 8) | BigInt.from(b);
     }
     return x.modPow(e, n).toRadixString(16).padLeft(k * 2, '0');
+  }
+
+  /// RSA-OAEP (SHA-1, MGF1-SHA-1) encryption of [text], as hex of the key size.
+  static String oaepHex(String text, BigInt n, BigInt e) {
+    final k = (n.bitLength + 7) ~/ 8;
+    final rnd = FortunaRandom()
+      ..seed(KeyParameter(Uint8List.fromList(List.generate(32, (_) => Random.secure().nextInt(256)))));
+    final enc = OAEPEncoding(RSAEngine())
+      ..init(true, ParametersWithRandom(PublicKeyParameter<RSAPublicKey>(RSAPublicKey(n, e)), rnd));
+    final out = enc.process(Uint8List.fromList(utf8.encode(text)));
+    return out.map((b) => b.toRadixString(16).padLeft(2, '0')).join().padLeft(k * 2, '0');
   }
 }
