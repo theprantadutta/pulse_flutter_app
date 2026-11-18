@@ -10,6 +10,10 @@
     <!-- Optional: If you need to change Wi-Fi state (turn on/off Wi-Fi) -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- The Wi-Fi permissions imply android.hardware.wifi as required; Pulse
+         works on Ethernet or mobile data too, so don't hide it from devices
+         without Wi-Fi (Play flags the implied requirement). -->
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
 
     <!-- Optional: If you need to scan for Wi-Fi networks -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
