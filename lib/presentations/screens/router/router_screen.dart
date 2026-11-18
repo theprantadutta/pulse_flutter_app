@@ -405,6 +405,24 @@ class _Tiles extends ConsumerWidget {
         ),
       );
     }
+    final wan = v?.wan;
+    if (wan != null && wan.current != null) {
+      tiles.add(
+        _TileData(
+          title: 'Internet',
+          value: wan.current!.label,
+          caption: switch (wan.connected) {
+            true => 'Connected',
+            false => 'Not connected',
+            null => '${wan.available.length} types offered',
+          },
+          icon: PulseIcons.globe,
+          shape: PulseShape.sunny,
+          tone: PulseTone.lime,
+          route: Routes.routerInternet,
+        ),
+      );
+    }
     final main = v?.wifi.where((n) => n.kind == WifiKind.main).toList() ?? const <WifiNetwork>[];
     if (main.isNotEmpty) {
       final on = main.where((n) => n.enabled == true).length;
@@ -917,6 +935,7 @@ class _Capabilities extends ConsumerWidget {
     RouterActions.guestToggle || RouterActions.guestEdit => v.wifi.any((n) => n.kind == WifiKind.guest),
     RouterActions.iotToggle || RouterActions.iotEdit => v.wifi.any((n) => n.kind == WifiKind.iot),
     RouterActions.wifiToggle || RouterActions.wifiEdit => v.wifi.any((n) => n.kind == WifiKind.main),
+    RouterActions.internetType || RouterActions.internetEdit => v.wan != null,
     _ => true,
   };
 }
@@ -1000,19 +1019,18 @@ class _InternetCardState extends ConsumerState<_InternetCard> {
             ),
           ],
           const SizedBox(height: 14),
-          _Row(
-            label: 'Public IP',
-            value: ip == null ? 'Not reported' : (_showIp ? ip : _mask(ip)),
-            trailing: ip == null
-                ? null
-                : PulseIconButton(
-                    icon: _showIp ? PulseIcons.shield : PulseIcons.search,
-                    tooltip: _showIp ? 'Hide address' : 'Show address',
-                    visualSize: 32,
-                    iconSize: 16,
-                    onPressed: () => setState(() => _showIp = !_showIp),
-                  ),
-          ),
+          if (ip != null)
+            _Row(
+              label: 'Public IP',
+              value: _showIp ? ip : _mask(ip),
+              trailing: PulseIconButton(
+                icon: _showIp ? PulseIcons.shield : PulseIcons.search,
+                tooltip: _showIp ? 'Hide address' : 'Show address',
+                visualSize: 32,
+                iconSize: 16,
+                onPressed: () => setState(() => _showIp = !_showIp),
+              ),
+            ),
           if (s.accessType != null) _Row(label: 'Connection', value: s.accessType!),
           if (_realRate(s.maxDownBps, s.maxUpBps))
             _Row(

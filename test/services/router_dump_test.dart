@@ -21,6 +21,14 @@ void main() {
     final d = TplinkDriver(gw);
     await d.signIn(RouterCredential('', pw));
     const calls = <(String, List<String>)>[
+      ('admin/network?form=wan_ipv4_protos', ['read']),
+      ('admin/network?form=wan_ipv4_status', ['read']),
+      ('admin/network?form=wan_ipv4_dynamic', ['read']),
+      ('admin/network?form=wan_ipv4_staticip', ['read']),
+      ('admin/network?form=wan_ipv4_bigpond', ['read']),
+      ('admin/network?form=wan_ipv4_pppoe', ['read']),
+      ('admin/network?form=wan_ipv4_l2tp', ['read']),
+      ('admin/network?form=wan_ipv4_pptp', ['read']),
       ('admin/status?form=all', ['read']),
       ('admin/status?form=internet', ['read']),
       ('admin/status?form=network_map', ['read']),
@@ -89,11 +97,13 @@ void main() {
   }, timeout: const Timeout(Duration(minutes: 3)));
 }
 
-final _keep = RegExp(r'^(on|off|true|false|yes|no|auto|none|[a-z][a-z0-9_]{0,15}|-?\d{1,6}(\.\d+)?)$');
+final _keep = RegExp(
+  r'^(on|off|true|false|yes|no|auto|none|[a-z][a-z0-9_]{0,15}|[A-Za-z0-9 /().-]{1,24}|-?\d{1,6}(\.\d+)?)$',
+);
 
 Object? _mask(Object? v) {
   if (v is Map) return {for (final e in v.entries) '${e.key}': _mask(e.value)};
-  if (v is List) return [for (final x in v.take(2)) _mask(x), if (v.length > 2) '…${v.length} items'];
+  if (v is List) return [for (final x in v.take(8)) _mask(x), if (v.length > 8) '…${v.length} items'];
   if (v is String) return _keep.hasMatch(v) ? v : '<str ${v.length}>';
   return v;
 }

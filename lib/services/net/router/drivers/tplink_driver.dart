@@ -65,6 +65,7 @@ class TplinkDriver implements RouterDriver {
     RouterFeature.reboot,
     RouterFeature.portForwards,
     RouterFeature.dhcpLeases,
+    RouterFeature.internet,
   };
 
   @override
@@ -76,6 +77,8 @@ class TplinkDriver implements RouterDriver {
     RouterActions.iotToggle,
     RouterActions.iotEdit,
     RouterActions.reboot,
+    RouterActions.internetType,
+    RouterActions.internetEdit,
   };
 
   /// Whether the router at [host] speaks this protocol (no credentials sent).
@@ -619,6 +622,192 @@ class TplinkDriver implements RouterDriver {
           expires: _s(r['leasetime']),
         ),
     ];
+  }
+
+  // ---- Internet (WAN) ----
+
+  /// The web UI's form and `conntype` value for each type.
+  static const _wanForms = {
+    WanType.dhcp: ('wan_ipv4_dynamic', 'dhcp'),
+    WanType.static: ('wan_ipv4_staticip', 'static'),
+    WanType.pppoe: ('wan_ipv4_pppoe', 'pppoe'),
+    WanType.l2tp: ('wan_ipv4_l2tp', 'l2tp'),
+    WanType.pptp: ('wan_ipv4_pptp', 'pptp'),
+  };
+
+  static WanType? _wanType(Object? v) {
+    final s = '${v ?? ''}'.toLowerCase();
+    for (final e in _wanForms.entries) {
+      if (e.value.$2 == s) return e.key;
+    }
+    return null;
+  }
+
+  /// Read-only fields the router adds to its forms; never sent back.
+  static const _wanReadOnly = {'nonaddress_support', 'pppshare', 'link_status', 'conn_status'};
+
+  @override
+  Future<WanConfig> wan() async {
+    final listed = <WanType>[];
+    try {
+      for (final r in await _load('admin/network?form=wan_ipv4_protos', op: 'read')) {
+        final t = _wanType(r['value']);
+        if (t != null && !listed.contains(t)) listed.add(t);
+      }
+    } on RouterDriverException {
+      // Older firmware lists none; offer the forms that answer below.
+    }
+    final status = await _read('admin/network?form=wan_ipv4_status');
+    final settings = <WanType, WanSettings>{};
+    for (final t in listed.isEmpty ? _wanForms.keys : listed) {
+      try {
+        final f = await _read('admin/network?form=${_wanForms[t]!.$1}');
+        if (f.isNotEmpty) settings[t] = _wanSettings(t, f);
+      } on RouterDriverException {
+        continue;
+      }
+    }
+    final s = await _read('admin/status?form=all');
+    bool? online;
+    try {
+      final i = await _read('admin/status?form=internet');
+      final st = '${i['internet_status'] ?? ''}';
+      if (st.isNotEmpty) online = st == 'connected';
+    } on RouterDriverException {
+      // optional
+    }
+    return WanConfig(
+      // Only types Pulse can read back are offered.
+      available: [
+        for (final t in listed.isEmpty ? _wanForms.keys : listed)
+          if (settings.containsKey(t)) t,
+      ],
+      current: _wanType(status['conntype'] ?? s['wan_ipv4_conntype']),
+      settings: settings,
+      connected: online,
+      ip: _s(s['wan_ipv4_ipaddr']),
+      gateway: _s(s['wan_ipv4_gateway']),
+      dns: [?_s(s['wan_ipv4_pridns']), ?_s(s['wan_ipv4_snddns'])],
+    );
+  }
+
+  static WanSettings _wanSettings(WanType t, Map<String, dynamic> f) {
+    String? v(String k) => _s(f[k]);
+    final manual = '${f['dns_mode'] ?? ''}' == 'static';
+    final mtu = int.tryParse('${f['mtu']}');
+    switch (t) {
+      case WanType.dhcp:
+        return WanSettings(
+          type: t,
+          hostname: v('hostname'),
+          mtu: mtu,
+          manualDns: manual,
+          dns1: manual ? v('manual_pridns') : null,
+          dns2: manual ? v('manual_snddns') : null,
+        );
+      case WanType.static:
+        return WanSettings(
+          type: t,
+          ip: v('ipaddr'),
+          netmask: v('netmask'),
+          gateway: v('gateway'),
+          dns1: v('pri_dns'),
+          dns2: v('snd_dns'),
+          mtu: mtu,
+        );
+      case WanType.pppoe:
+        return WanSettings(
+          type: t,
+          username: v('username'),
+          password: v('password'),
+          mtu: mtu,
+          manualDns: manual,
+          dns1: manual ? v('static_pridns') : null,
+          dns2: manual ? v('static_snddns') : null,
+        );
+      case WanType.l2tp:
+      case WanType.pptp:
+        final st = '${f['snd_conn'] ?? ''}' == 'static';
+        return WanSettings(
+          type: t,
+          username: v('username'),
+          password: v('password'),
+          mtu: mtu,
+          secondaryStatic: st,
+          server: st ? v('static_server') : v('dyn_server'),
+          ip: st ? v('static_ip') : null,
+          netmask: st ? v('static_netmask') : null,
+          gateway: st ? v('static_gateway') : null,
+          dns1: st ? v('static_pridns') : null,
+          dns2: st ? v('static_snddns') : null,
+        );
+    }
+  }
+
+  /// The fields to change for [w], in the web UI's key names.
+  @visibleForTesting
+  static Map<String, String> wanFields(WanSettings w) {
+    final m = <String, String>{};
+    void put(String k, Object? v) {
+      if (v != null) m[k] = '$v';
+    }
+
+    put('mtu', w.mtu);
+    switch (w.type) {
+      case WanType.dhcp:
+        put('hostname', w.hostname);
+        if (w.manualDns != null) m['dns_mode'] = w.manualDns! ? 'static' : 'dynamic';
+        if (w.manualDns == true) {
+          put('manual_pridns', w.dns1);
+          put('manual_snddns', w.dns2 ?? '');
+        }
+      case WanType.static:
+        put('ipaddr', w.ip);
+        put('netmask', w.netmask);
+        put('gateway', w.gateway);
+        put('pri_dns', w.dns1);
+        put('snd_dns', w.dns2);
+      case WanType.pppoe:
+        put('username', w.username);
+        put('password', w.password);
+        if (w.manualDns != null) m['dns_mode'] = w.manualDns! ? 'static' : 'dynamic';
+        if (w.manualDns == true) {
+          put('static_pridns', w.dns1);
+          put('static_snddns', w.dns2 ?? '');
+        }
+      case WanType.l2tp:
+      case WanType.pptp:
+        put('username', w.username);
+        put('password', w.password);
+        if (w.secondaryStatic != null) m['snd_conn'] = w.secondaryStatic! ? 'static' : 'dynamic';
+        if (w.secondaryStatic == true) {
+          put('static_server', w.server);
+          put('static_ip', w.ip);
+          put('static_netmask', w.netmask);
+          put('static_gateway', w.gateway);
+          put('static_pridns', w.dns1);
+          put('static_snddns', w.dns2);
+        } else {
+          put('dyn_server', w.server);
+        }
+    }
+    return m;
+  }
+
+  @override
+  Future<void> setWan(WanSettings w) async {
+    final (form, conntype) = _wanForms[w.type]!;
+    // Like the web UI: the type's whole form, with the changes on top and its
+    // conntype, which also makes it the active type.
+    final current = await _read('admin/network?form=$form');
+    final body = <String, String>{
+      for (final e in current.entries)
+        if (!_wanReadOnly.contains(e.key) && e.value is! Map && e.value is! List) e.key: '${e.value ?? ''}',
+      ...wanFields(w),
+      'conntype': conntype,
+      'operation': 'write',
+    };
+    await _request('admin/network?form=$form', body);
   }
 }
 

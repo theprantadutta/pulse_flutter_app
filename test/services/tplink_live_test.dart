@@ -53,6 +53,13 @@ void main() {
         stdout.writeln('wifi ${w.id} (${w.kind.name}): ${w.enabled} ch ${w.channel} security ${w.security}');
       }
       stdout.writeln('forwards: ${(await d.forwards()).length}');
+      final w = await d.wan();
+      stdout.writeln(
+        'internet: ${w.current?.label}, offers ${w.available.map((t) => t.label).join('/')}, '
+        'connected ${w.connected}, read ${w.settings.length} types, dns ${w.dns.length}',
+      );
+      expect(w.current, isNotNull);
+      expect(w.settings[w.current], isNotNull);
     } finally {
       await d.signOut();
     }

@@ -22,6 +22,7 @@ import '../screens/tools/tools_hub_screen.dart';
 import '../../services/net/router/drivers/router_driver.dart' show WifiKind;
 import '../screens/router/router_admin_screen.dart';
 import '../screens/router/router_devices_screen.dart';
+import '../screens/router/router_internet_screen.dart';
 import '../screens/router/router_ports_screen.dart';
 import '../screens/router/router_wifi_screen.dart';
 import '../screens/router/router_screen.dart';
@@ -167,6 +168,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             (s) => RouterWifiScreen(focus: s.uri.queryParameters['focus'] == 'guest' ? WifiKind.guest : null),
           ),
           _route(Routes.routerPorts, (s) => const RouterPortsScreen()),
+          _route(Routes.routerInternet, (s) => const RouterInternetScreen()),
           _route(Routes.tools, (s) => const ToolsHubScreen()),
         ],
       ),

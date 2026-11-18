@@ -54,6 +54,7 @@ class RouterManaged {
     this.clients = const [],
     this.wifi = const [],
     this.forwards = const [],
+    this.wan,
     this.at,
   });
 
@@ -65,6 +66,9 @@ class RouterManaged {
   final List<RouterClient> clients;
   final List<WifiNetwork> wifi;
   final List<RouterForward> forwards;
+
+  /// The internet connection (null when the router doesn't expose it).
+  final WanConfig? wan;
   final DateTime? at;
 
   RouterManaged copyWith({
@@ -72,6 +76,7 @@ class RouterManaged {
     List<RouterClient>? clients,
     List<WifiNetwork>? wifi,
     List<RouterForward>? forwards,
+    WanConfig? wan,
     DateTime? at,
   }) => RouterManaged(
     features: features,
@@ -80,6 +85,7 @@ class RouterManaged {
     clients: clients ?? this.clients,
     wifi: wifi ?? this.wifi,
     forwards: forwards ?? this.forwards,
+    wan: wan ?? this.wan,
     at: at ?? this.at,
   );
 }
@@ -129,6 +135,7 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
       opt(RouterFeature.clients, d.clients),
       opt(RouterFeature.wifi, d.wifi),
       opt(RouterFeature.portForwards, d.forwards),
+      opt(RouterFeature.internet, d.wan),
     ]);
     return RouterManaged(
       features: d.features,
@@ -137,6 +144,7 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
       clients: (r[1] as List<RouterClient>?) ?? const [],
       wifi: (r[2] as List<WifiNetwork>?) ?? const [],
       forwards: (r[3] as List<RouterForward>?) ?? const [],
+      wan: r[4] as WanConfig?,
       at: DateTime.now(),
     );
   }
@@ -180,10 +188,49 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     }
   }
 
+  /// Saves internet settings, then reads them back until the router reports
+  /// the new type and values (it reconnects meanwhile). True when it does,
+  /// false when it reports something else, null when it couldn't be read.
+  Future<bool?> setWan(WanSettings w) async {
+    final d = _driver, cur = state.value;
+    if (d == null || cur == null) throw const RouterDriverException(RouterErrorKind.unexpected, 'not signed in');
+    await d.setWan(w);
+    bool? result;
+    for (var i = 0; i < 8; i++) {
+      await Future<void>.delayed(const Duration(seconds: 3));
+      try {
+        final c = await d.wan();
+        state = AsyncData((state.value ?? cur).copyWith(wan: c));
+        result = c.current == w.type && wanMatches(c.settings[w.type], w);
+        if (result) return true;
+      } on Object {
+        // The router may be busy reconnecting; try again.
+      }
+    }
+    return result;
+  }
+
   Future<void> reboot() async {
     final d = _driver;
     if (d == null) return;
     _timer?.cancel();
     await d.reboot();
   }
+}
+
+/// Whether the router's saved [read] has every value [asked] set (passwords
+/// are skipped: some firmware never returns them).
+bool wanMatches(WanSettings? read, WanSettings asked) {
+  if (read == null) return false;
+  bool same(Object? want, Object? got) => want == null || want == got;
+  return same(asked.ip, read.ip) &&
+      same(asked.netmask, read.netmask) &&
+      same(asked.gateway, read.gateway) &&
+      same(asked.dns1, read.dns1) &&
+      same(asked.mtu, read.mtu) &&
+      same(asked.hostname, read.hostname) &&
+      same(asked.username, read.username) &&
+      same(asked.server, read.server) &&
+      same(asked.manualDns, read.manualDns) &&
+      same(asked.secondaryStatic, read.secondaryStatic);
 }

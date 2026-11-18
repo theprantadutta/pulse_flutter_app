@@ -2,7 +2,7 @@ import '../router_probe.dart';
 
 /// What a native driver can do with a router after signing in. The Router
 /// screen shows only these; everything else stays in "Full router settings".
-enum RouterFeature { overview, clients, wifi, guestWifi, reboot, portForwards, dhcpLeases }
+enum RouterFeature { overview, clients, wifi, guestWifi, reboot, portForwards, dhcpLeases, internet }
 
 /// Changes a driver can make, as the ids the backend verifies per router
 /// model + firmware ("Did it work?" reports). Reads need no verification: a
@@ -15,6 +15,12 @@ abstract final class RouterActions {
   static const iotToggle = 'iot.toggle';
   static const iotEdit = 'iot.edit';
   static const reboot = 'system.reboot';
+
+  /// Switch the internet connection type (Dynamic IP → PPPoE…).
+  static const internetType = 'internet.type';
+
+  /// Change the settings of the current connection type.
+  static const internetEdit = 'internet.edit';
 
   static String toggle(WifiNetwork n) => switch (n.kind) {
     WifiKind.main => wifiToggle,
@@ -37,6 +43,8 @@ abstract final class RouterActions {
     iotToggle => 'Smart-home network on / off',
     iotEdit => 'Smart-home name and password',
     reboot => 'Restart the router',
+    internetType => 'Internet connection type',
+    internetEdit => 'Internet connection settings',
     _ => id,
   };
 }
@@ -218,6 +226,89 @@ class DhcpLease {
   final String? expires;
 }
 
+/// How the router connects to the internet provider.
+enum WanType {
+  dhcp('Dynamic IP', 'The provider hands out an address automatically. Most cable and fibre lines.'),
+  static('Static IP', 'A fixed address, mask, gateway and DNS from your provider.'),
+  pppoe('PPPoE', 'A username and password from your provider. Common on DSL and fibre.'),
+  l2tp('L2TP', 'A username, password and server from your provider.'),
+  pptp('PPTP', 'A username, password and server from your provider.');
+
+  const WanType(this.label, this.help);
+  final String label;
+  final String help;
+
+  bool get usesLogin => this == pppoe || this == l2tp || this == pptp;
+  bool get usesServer => this == l2tp || this == pptp;
+}
+
+/// One connection type's settings. Null fields are unknown (on read) or
+/// unchanged (on write).
+class WanSettings {
+  const WanSettings({
+    required this.type,
+    this.ip,
+    this.netmask,
+    this.gateway,
+    this.dns1,
+    this.dns2,
+    this.manualDns,
+    this.mtu,
+    this.hostname,
+    this.username,
+    this.password,
+    this.server,
+    this.secondaryStatic,
+  });
+
+  final WanType type;
+
+  /// Static IP: the address. L2TP/PPTP with a static secondary connection:
+  /// the address on the provider's side.
+  final String? ip;
+  final String? netmask;
+  final String? gateway;
+  final String? dns1;
+  final String? dns2;
+
+  /// Use [dns1]/[dns2] instead of the provider's DNS (Dynamic IP, PPPoE, L2TP, PPTP).
+  final bool? manualDns;
+  final int? mtu;
+  final String? hostname;
+  final String? username;
+  final String? password;
+
+  /// L2TP/PPTP server address or name.
+  final String? server;
+
+  /// L2TP/PPTP: the secondary connection uses a static address.
+  final bool? secondaryStatic;
+}
+
+/// The router's internet connection: the types it offers, the active one,
+/// each type's saved settings, and what it has now.
+class WanConfig {
+  const WanConfig({
+    required this.available,
+    required this.current,
+    this.settings = const {},
+    this.connected,
+    this.ip,
+    this.gateway,
+    this.dns = const [],
+  });
+
+  final List<WanType> available;
+  final WanType? current;
+  final Map<WanType, WanSettings> settings;
+  final bool? connected;
+
+  /// The address the router has on the provider's side right now.
+  final String? ip;
+  final String? gateway;
+  final List<String> dns;
+}
+
 /// A native client for one router family. One session at a time; call
 /// [signIn] first and [signOut] when done (many routers allow a single admin).
 abstract class RouterDriver {
@@ -239,4 +330,11 @@ abstract class RouterDriver {
   Future<void> reboot();
   Future<List<RouterForward>> forwards();
   Future<List<DhcpLease>> leases();
+
+  /// The internet connection (RouterFeature.internet).
+  Future<WanConfig> wan();
+
+  /// Saves [settings] and makes its type the active one. Fields left null
+  /// keep the router's current values for that type.
+  Future<void> setWan(WanSettings settings);
 }

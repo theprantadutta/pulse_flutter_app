@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:pulse/data/db/app_database.dart';
 import 'package:pulse/presentations/screens/router/router_devices_screen.dart';
+import 'package:pulse/presentations/screens/router/router_internet_screen.dart';
 import 'package:pulse/presentations/screens/router/router_screen.dart';
 import 'package:pulse/presentations/screens/router/router_wifi_screen.dart';
 import 'package:pulse/services/net/router/verification.dart';
@@ -54,6 +55,8 @@ class _Signed extends RouterManager {
       RouterActions.iotToggle,
       RouterActions.iotEdit,
       RouterActions.reboot,
+      RouterActions.internetType,
+      RouterActions.internetEdit,
     },
     overview: RouterOverview(
       model: 'Archer AX53',
@@ -100,6 +103,27 @@ class _Signed extends RouterManager {
       ),
       RouterClient(mac: 'AA:BB:CC:00:00:03', ip: '192.168.0.40', link: ClientLink.wifi2g),
     ],
+    wan: WanConfig(
+      available: WanType.values,
+      current: WanType.static,
+      connected: true,
+      ip: '198.51.100.21',
+      gateway: '198.51.100.1',
+      dns: ['198.51.100.5', '198.51.100.6'],
+      settings: {
+        WanType.static: WanSettings(
+          type: WanType.static,
+          ip: '198.51.100.21',
+          netmask: '255.255.255.0',
+          gateway: '198.51.100.1',
+          dns1: '198.51.100.5',
+          dns2: '198.51.100.6',
+          mtu: 1500,
+        ),
+        WanType.dhcp: WanSettings(type: WanType.dhcp, hostname: 'Archer_AX53', mtu: 1500, manualDns: false),
+        WanType.pppoe: WanSettings(type: WanType.pppoe, mtu: 1480, manualDns: false),
+      },
+    ),
     wifi: [
       WifiNetwork(
         id: 'wireless_2g',
@@ -234,6 +258,12 @@ void main() {
     ),
     ('router_devices', const RouterDevicesScreen(), '/router/devices', const {'phone': kPhone, 'tablet': kTablet}),
     ('router_wifi', const RouterWifiScreen(), '/router/wifi', const {'phone_tall': Size(390, 1900), 'tablet': kTablet}),
+    (
+      'router_internet',
+      const RouterInternetScreen(),
+      '/router/internet',
+      const {'phone_tall': Size(390, 1700), 'tablet': kTablet, 'desktop': Size(1440, 1000)},
+    ),
   ]) {
     testWidgets('signed in: $name', (tester) async {
       final c = (await tester.runAsync(() => container(profile: _profile)))!;

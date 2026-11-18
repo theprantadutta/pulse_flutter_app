@@ -37,6 +37,7 @@ class Routes {
   static const routerDevices = '/router/devices';
   static const routerWifi = '/router/wifi';
   static const routerPorts = '/router/ports';
+  static const routerInternet = '/router/internet';
 }
 
 const kTabRoots = <MobileTab, String>{
