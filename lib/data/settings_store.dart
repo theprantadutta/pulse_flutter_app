@@ -47,6 +47,7 @@ class SettingsStore {
       exportFormat: ExportFormat.values.firstWhere((f) => f.name == format, orElse: () => _defaults.exportFormat),
       exportFolder: prefs.getString(kExportFolderKey),
       publicIpLookups: pick(kPublicIpLookupsKey, _defaults.publicIpLookups),
+      routerReports: pick(kRouterReportsKey, _defaults.routerReports),
       lanDeviceWatch: pick(kLanDeviceWatchKey, _defaults.lanDeviceWatch),
     );
   }
@@ -74,6 +75,7 @@ class SettingsStore {
       prefs.setString(kExportFormatKey, s.exportFormat.name),
       if (s.exportFolder != null) prefs.setString(kExportFolderKey, s.exportFolder!),
       prefs.setBool(kPublicIpLookupsKey, s.publicIpLookups),
+      prefs.setBool(kRouterReportsKey, s.routerReports),
       prefs.setBool(kLanDeviceWatchKey, s.lanDeviceWatch),
     ]);
   }

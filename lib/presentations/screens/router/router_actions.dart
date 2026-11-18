@@ -7,6 +7,7 @@ import 'package:qr/qr.dart';
 
 import '../../../core/widgets/pulse/pulse.dart';
 import '../../../providers/router_manage_provider.dart';
+import '../../../providers/settings_provider.dart';
 import '../../../services/net/router/drivers/router_driver.dart';
 import '../../../services/net/router/verification.dart';
 
@@ -79,7 +80,8 @@ Future<void> runRouterAction(
   nav.pop();
   if (!context.mounted) return;
 
-  final id = caps?.identity;
+  // With "Share router results" off, Pulse neither asks nor sends.
+  final id = ref.read(settingsProvider).routerReports ? caps?.identity : null;
   final verify = ref.read(routerVerificationProvider);
   Future<void> report(bool worked) async {
     if (id == null) return;
@@ -345,7 +347,7 @@ Future<void> restartRouter(BuildContext context, WidgetRef ref, {required String
   }
   nav.pop();
   text.dispose();
-  final id = caps?.identity;
+  final id = ref.read(settingsProvider).routerReports ? caps?.identity : null;
   if (id != null && error == null && result != null) {
     // Objective either way: it went down and came back, or never went down.
     await ref.read(routerVerificationProvider).report(id, RouterActions.reboot, worked: result);

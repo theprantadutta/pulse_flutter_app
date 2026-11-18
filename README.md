@@ -22,6 +22,7 @@ A **network diagnostics and monitoring** app for Windows, macOS, Linux, Android 
 - **Network info** – SSID, Wi-Fi standard, band, channel, security, signal, addressing, public IP, ISP and ASN.
 - **LAN scan** – devices with names, vendors (MAC OUI), types and open ports; Wake-on-LAN.
 - **Geo IP** – locate any host on a built-in offline world map with distance, RTT and hops.
+- **Router** – sign in to your router and manage it from Pulse: every device with live speed, signal and data used; Wi-Fi, guest and smart-home networks on/off, names, passwords and a join QR code; the internet connection type (Dynamic IP, Static IP, PPPoE, L2TP, PPTP); restart; UPnP port forwards. Changes not yet confirmed for a router model are offered as "Try it", read back afterwards and verified through anonymous "did it work?" reports. "Full router settings" opens the router's own page inside Pulse. Sign-in works today on TP-Link Archer routers with the newer web interface; most other routers get UPnP status and port forwards.
 - **Monitor & Alerts** – background checks with uptime strips and incidents; rules for latency, loss, outages and new LAN devices, delivered as notifications, tray alerts or sound. Runs from the system tray on desktop and as a background service on Android/iOS.
 - **History** – every session, searchable, exportable as CSV, JSON or text.
 

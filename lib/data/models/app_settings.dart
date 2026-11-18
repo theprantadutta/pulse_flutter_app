@@ -30,6 +30,7 @@ class AppSettings {
     this.exportFormat = ExportFormat.csv,
     this.exportFolder,
     this.publicIpLookups = true,
+    this.routerReports = true,
     this.lanDeviceWatch = false,
   });
 
@@ -67,6 +68,11 @@ class AppSettings {
   /// ISP and geo lookups. No third-party IP service is used.
   final bool publicIpLookups;
 
+  /// Sends anonymous "Did it work?" answers about router changes (driver,
+  /// model, firmware, change, result) to Pulse's server, which verifies
+  /// changes per router model. Off: Pulse neither asks nor sends.
+  final bool routerReports;
+
   /// Periodically sweeps the LAN in the background to detect new devices.
   final bool lanDeviceWatch;
 
@@ -92,6 +98,7 @@ class AppSettings {
     ExportFormat? exportFormat,
     String? exportFolder,
     bool? publicIpLookups,
+    bool? routerReports,
     bool? lanDeviceWatch,
   }) {
     return AppSettings(
@@ -116,6 +123,7 @@ class AppSettings {
       exportFormat: exportFormat ?? this.exportFormat,
       exportFolder: exportFolder ?? this.exportFolder,
       publicIpLookups: publicIpLookups ?? this.publicIpLookups,
+      routerReports: routerReports ?? this.routerReports,
       lanDeviceWatch: lanDeviceWatch ?? this.lanDeviceWatch,
     );
   }

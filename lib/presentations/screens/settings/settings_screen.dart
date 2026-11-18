@@ -623,6 +623,15 @@ class SettingsSectionBody extends ConsumerWidget {
                     ref.read(networkInfoProvider.notifier).refresh();
                   },
                 ),
+                (r) => PulseSwitchItem(
+                  icon: PulseIcons.router,
+                  title: 'Share router results',
+                  subtitle:
+                      'After a router change, asks whether it worked and sends the answer anonymously (router '
+                      'model, firmware, the change) so changes get verified for everyone',
+                  value: s.routerReports,
+                  onChanged: (v) => set((x) => x.copyWith(routerReports: v)),
+                ),
                 (r) => SettingsValueItem(
                   icon: PulseIcons.shield,
                   title: 'Privacy policy',
