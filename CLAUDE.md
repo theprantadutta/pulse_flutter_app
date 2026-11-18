@@ -80,6 +80,22 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   `speed?run=1`, `open?to=/route`). Settings › Appearance › Home screen widgets (`/settings/widgets`) lists and pins them.
 - Keys/JSON shapes are shared by Dart, `WidgetStore.kt` and `PulseShared.swift`; change all three together.
 
+### Router control (branch `feature/router-control`, not merged)
+- Plan: `docs/ROUTER_ANY_ROUTER_PLAN.md` (support ladder, verified capabilities, drivers, safety rules). Feasibility:
+  `docs/ROUTER_CONTROL_RESEARCH.md`. Code: `lib/services/net/router/` (probe, UPnP IGD, drivers + registry),
+  `providers/router_provider.dart`, `router_manage_provider.dart`, `screens/router/`.
+- Office router = TP-Link Archer AX53 (192.168.0.1, firmware 1.7.1 / web UI 1.11): the "luci-encrypted-web" driver.
+  Over HTTPS its web app sends PLAIN form data (the AES/SG envelope is only for HTTP). Its password is in the
+  git-ignored `.env` as `PULSE_ROUTER_PASSWORD`; `test/services/tplink_live_test.dart` reads it. Never print or open
+  `.env`, and never change the office Wi-Fi or reboot the router without the owner's explicit OK.
+- **Owner's home router (future session):** the owner offered it for testing. If a session runs on a network whose
+  router is NOT the TP-Link AX53 (check `RouterProbe` / the gateway's UPnP description), that's the home router: identify
+  it, see which driver probes answer (`detectRouterDriver`), record fixtures, run read tests, and ask the owner before
+  any write.
+- Router logins are saved only when the user ticks "Remember on this device" (default off); otherwise in memory for
+  the session. Feature verification is meant to be crowd-sourced through the backend (owner's decision): ask users
+  whether an action worked and store verified/unverified per driver + model + firmware + feature.
+
 ### Decisions made with the user
 - Persistence: **drift** (`lib/data/db/app_database.dart`, run `dart run build_runner build` after schema edits).
 - **No stubs anywhere.** Every screen/provider must be fully real: LAN scan, Monitor, Alerts, Geo IP, Packet loss
