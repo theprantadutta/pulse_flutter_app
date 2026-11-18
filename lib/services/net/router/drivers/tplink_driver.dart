@@ -168,7 +168,10 @@ class TplinkDriver implements RouterDriver {
   // ---- Sign-in ----
 
   @override
-  Future<void> signIn(RouterCredential login) async {
+  Future<void> signIn(RouterCredential login, {bool force = false}) async {
+    // `confirm=true` is the web UI's "sign out the other device" answer; it
+    // is only sent when the person chose that.
+    final confirm = force ? '&confirm=true' : '';
     _login = login;
     _stok = '';
     _sysauth = null;
@@ -185,7 +188,7 @@ class TplinkDriver implements RouterDriver {
       _session = null;
       final r = await _post(
         _url('login', 'login?form=login', stok: ''),
-        body: 'password=$encPwd&operation=login&confirm=true',
+        body: 'password=$encPwd&operation=login$confirm',
       );
       final j = _json(r.body);
       if (_accept(j, r.cookies)) return;
@@ -194,7 +197,7 @@ class TplinkDriver implements RouterDriver {
       _jsonBodies = true;
     }
 
-    if (await _isSg()) return _signInSg(login, encPwd);
+    if (await _isSg()) return _signInSg(login, encPwd, confirm);
 
     // AES-session login (what the web UI does when `form=auth` exists).
     Map<String, dynamic>? auth;
@@ -215,7 +218,7 @@ class TplinkDriver implements RouterDriver {
         hash: md5.convert(utf8.encode(username + login.password)).toString(),
       );
       _encrypted = true;
-      final plain = 'operation=login&password=$encPwd&confirm=true';
+      final plain = 'operation=login&password=$encPwd$confirm';
       final r = await _post(_url('login', 'login?form=login', stok: ''), body: _session!.envelope(plain, login: true));
       if (r.status != 403) {
         final j = _decrypt(_json(r.body));
@@ -249,7 +252,7 @@ class TplinkDriver implements RouterDriver {
     }
   }
 
-  Future<void> _signInSg(RouterCredential login, String encPwd) async {
+  Future<void> _signInSg(RouterCredential login, String encPwd, String confirm) async {
     _sg = true;
     final r0 = await _post(_url('login', 'login?form=auth&operation=read', stok: ''));
     final auth = _json(r0.body)['data'];
@@ -267,7 +270,7 @@ class TplinkDriver implements RouterDriver {
     _encrypted = true;
     final r = await _post(
       _url('login', 'login?form=login', stok: ''),
-      body: _session!.envelope('operation=login&password=$encPwd&confirm=true', login: true),
+      body: _session!.envelope('operation=login&password=$encPwd$confirm', login: true),
     );
     final j = _decrypt(_json(r.body));
     if (_accept(j, r.cookies)) return;
@@ -286,7 +289,10 @@ class TplinkDriver implements RouterDriver {
     final data = j['data'] is Map ? j['data'] as Map : const {};
     final code = '${j['errorcode'] ?? data['errorcode'] ?? ''}'.toLowerCase();
     final left = int.tryParse('${data['attemptsAllowed'] ?? ''}');
-    if (code.contains('conflict') || code.contains('user')) throw const RouterDriverException(RouterErrorKind.busy);
+    // "user conflict": someone else is signed in; "multiple login": the same.
+    if (code.contains('conflict') || code.contains('multiple')) {
+      throw const RouterDriverException(RouterErrorKind.busy);
+    }
     if (left == 0 || code.contains('exceed') || code.contains('lock')) {
       throw const RouterDriverException(RouterErrorKind.lockedOut);
     }

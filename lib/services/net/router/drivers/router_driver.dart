@@ -61,7 +61,7 @@ class RouterDriverException implements Exception {
     RouterErrorKind.wrongPassword => 'The router said the password is wrong.',
     RouterErrorKind.lockedOut => 'The router locked sign-in after failed attempts. Wait a few minutes and try again.',
     RouterErrorKind.busy =>
-      'Someone else is signed in to the router (maybe its web page in a browser). Sign out there, or try again.',
+      "The router is signed in on another device (maybe its page in a browser) and allows one at a time.",
     RouterErrorKind.unsupported => "Pulse can't sign in to this router model yet.",
     RouterErrorKind.network => "Couldn't reach the router${detail == null ? '' : ': $detail'}.",
     RouterErrorKind.unexpected =>
@@ -318,7 +318,10 @@ abstract class RouterDriver {
   /// one only as verified or "Try it" (see RouterCapabilities).
   Set<String> get actions;
 
-  Future<void> signIn(RouterCredential login);
+  /// Signs in. Routers usually allow one admin at a time: when someone else
+  /// is signed in this fails with [RouterErrorKind.busy], unless [force] is
+  /// set, which signs the other session out (only after the person agreed).
+  Future<void> signIn(RouterCredential login, {bool force = false});
   Future<void> signOut();
 
   Future<RouterOverview> overview();

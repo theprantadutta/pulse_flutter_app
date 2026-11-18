@@ -19,7 +19,7 @@ void main() {
     final gw = await Gateway.ipv4();
     if (out == null || pw == null || gw == null) return markTestSkipped('needs PULSE_ROUTER_DUMP + password');
     final d = TplinkDriver(gw);
-    await d.signIn(RouterCredential('', pw));
+    await d.signIn(RouterCredential('', pw), force: true);
     const calls = <(String, List<String>)>[
       ('admin/network?form=wan_ipv4_protos', ['read']),
       ('admin/network?form=wan_ipv4_status', ['read']),

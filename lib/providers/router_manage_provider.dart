@@ -105,6 +105,9 @@ final routerManageProvider = AsyncNotifierProvider.autoDispose<RouterManager, Ro
 
 class RouterManager extends AsyncNotifier<RouterManaged?> {
   RouterDriver? _driver;
+
+  /// Set by [signInHere]: the next sign-in signs the other device out.
+  bool _forceNext = false;
   Timer? _timer;
 
   @override
@@ -120,7 +123,9 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
       _timer?.cancel();
       unawaited(driver.signOut());
     });
-    await driver.signIn(login);
+    final force = _forceNext;
+    _forceNext = false;
+    await driver.signIn(login, force: force);
     final m = await _loadAll(driver);
     _timer = Timer.periodic(const Duration(seconds: 15), (_) => _refreshClients());
     return m;
@@ -167,6 +172,13 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     } on Object {
       // Keep the last list; a full refresh shows errors.
     }
+  }
+
+  /// Signs in even though another device is signed in, which signs that
+  /// device out (the person chose it after a "busy" error).
+  void signInHere() {
+    _forceNext = true;
+    ref.invalidateSelf();
   }
 
   Future<void> refresh() async {

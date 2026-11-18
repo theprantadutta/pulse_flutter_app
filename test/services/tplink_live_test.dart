@@ -35,7 +35,7 @@ void main() {
       }
       return;
     }
-    await d.signIn(RouterCredential('', real));
+    await d.signIn(RouterCredential('', real), force: true);
     try {
       final o = await d.overview();
       stdout.writeln(

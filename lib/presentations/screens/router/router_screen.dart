@@ -642,6 +642,7 @@ class _SignInError extends ConsumerWidget {
     void askAgain() =>
         editRouterLogin(context, ref, profile, cred == null ? null : RouterCredential(cred!.username, ''));
     final wrong = kind == RouterErrorKind.wrongPassword;
+    if (kind == RouterErrorKind.busy) return _SignedInElsewhere(profile: profile);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -763,6 +764,58 @@ class _Actions extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The router has another admin session: offer to sign it out, like the
+/// router's own page does.
+class _SignedInElsewhere extends ConsumerWidget {
+  const _SignedInElsewhere({required this.profile});
+  final RouterProfile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: c.secondaryContainer, borderRadius: BorderRadius.circular(28)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Signed in on another device', style: context.type.titleLarge!.copyWith(color: c.onSecondaryContainer)),
+          const SizedBox(height: 6),
+          Text(
+            'The router allows one admin at a time, and someone is signed in elsewhere: its page in a browser, '
+            'or Pulse on another phone or tablet. Sign in here to sign that device out.',
+            style: context.type.bodyMedium!.copyWith(color: c.onSecondaryContainer),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              PulseButton(
+                label: 'Sign in here',
+                icon: PulseIcons.shield,
+                style: PulseButtonStyle.pink,
+                onPressed: () => ref.read(routerManageProvider.notifier).signInHere(),
+              ),
+              PulseButton(
+                label: 'Try again',
+                icon: PulseIcons.refresh,
+                style: PulseButtonStyle.outlined,
+                onPressed: () => ref.invalidate(routerManageProvider),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Signed out somewhere else already? Tap Try again.',
+            style: context.type.bodySmall!.copyWith(color: c.onSecondaryContainer),
+          ),
+        ],
+      ),
     );
   }
 }

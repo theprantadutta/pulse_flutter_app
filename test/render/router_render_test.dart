@@ -171,6 +171,11 @@ class _WrongPassword extends RouterManager {
       throw const RouterDriverException(RouterErrorKind.wrongPassword, 'login failed');
 }
 
+class _Busy extends RouterManager {
+  @override
+  Future<RouterManaged?> build() async => throw const RouterDriverException(RouterErrorKind.busy);
+}
+
 void main() {
   setUpAll(loadPulseFonts);
 
@@ -278,6 +283,31 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     sub.close();
     failed.dispose();
+    c.dispose();
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('signed in elsewhere: offers "Sign in here"', (tester) async {
+    final c = (await tester.runAsync(() => container(profile: _profile)))!;
+    final busy = ProviderContainer(parent: c, overrides: [routerManageProvider.overrideWith(_Busy.new)]);
+    await tester.runAsync(() => busy.read(routerProfileProvider.future));
+    await tester.runAsync(() => busy.read(routerDriverTypeProvider.future));
+    await tester.runAsync(() => busy.read(routerCredentialProvider.future));
+    final sub = busy.listen(routerManageProvider, (_, _) {});
+    await tester.runAsync(() => busy.read(routerManageProvider.future).then<void>((_) {}, onError: (_) {}));
+    final failures = await renderMatrix(
+      tester,
+      'router_busy',
+      busy,
+      const RouterScreen(),
+      location: '/router',
+      devices: const {'phone': kPhone},
+    );
+    expect(failures, isEmpty);
+    expect(find.text('Sign in here'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    sub.close();
+    busy.dispose();
     c.dispose();
     await tester.pump(const Duration(seconds: 1));
   });

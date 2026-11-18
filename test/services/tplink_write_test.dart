@@ -19,7 +19,7 @@ void main() {
     final gw = await Gateway.ipv4();
     if (pw == null || gw == null) return markTestSkipped('needs PULSE_ROUTER_PASSWORD');
     final d = TplinkDriver(gw);
-    await d.signIn(RouterCredential('', pw));
+    await d.signIn(RouterCredential('', pw), force: true);
     try {
       Future<WifiNetwork> guest() async => (await d.wifi()).firstWhere((n) => n.id == 'guest_2g');
       final before = await guest();
@@ -56,7 +56,7 @@ void _more() {
     final gw = await Gateway.ipv4();
     if (pw == null || gw == null) return markTestSkipped('needs PULSE_ROUTER_PASSWORD');
     final d = TplinkDriver(gw);
-    await d.signIn(RouterCredential('', pw));
+    await d.signIn(RouterCredential('', pw), force: true);
     Future<WifiNetwork> net(String id) async => (await d.wifi()).firstWhere((n) => n.id == id);
     final g = await net('guest_2g');
     final iot = await net('iot_2g');
