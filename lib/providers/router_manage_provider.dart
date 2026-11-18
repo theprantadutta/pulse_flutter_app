@@ -3,19 +3,16 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../services/net/router/drivers/driver_registry.dart';
 import '../services/net/router/drivers/router_driver.dart';
-import '../services/net/router/drivers/tplink_driver.dart';
-import '../services/net/router/router_probe.dart';
 import 'router_provider.dart';
 
-/// The native driver for this router, when Pulse has one.
-RouterDriver? driverFor(RouterProfile? p) {
-  if (p == null) return null;
-  return switch (p.brand) {
-    RouterBrand.tplink => TplinkDriver(p.gateway),
-    _ => null,
-  };
-}
+/// The driver that can sign in to the router on this network, found by
+/// probing it (see kRouterDrivers). Null when Pulse can't manage it natively.
+final routerDriverTypeProvider = FutureProvider<RouterDriverType?>((ref) async {
+  final p = await ref.watch(routerProfileProvider.future);
+  return p == null ? null : detectRouterDriver(p);
+});
 
 /// Everything a signed-in driver read from the router.
 @immutable
@@ -66,8 +63,9 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
   Future<RouterManaged?> build() async {
     final profile = await ref.watch(routerProfileProvider.future);
     final login = await ref.watch(routerCredentialProvider.future);
-    final driver = driverFor(profile);
-    if (driver == null || login == null) return null;
+    final type = await ref.watch(routerDriverTypeProvider.future);
+    if (profile == null || type == null || login == null) return null;
+    final driver = type.create(profile.gateway);
     _driver = driver;
     ref.onDispose(() {
       _timer?.cancel();

@@ -699,19 +699,26 @@ Future<void> editRouterLogin(BuildContext context, WidgetRef ref, RouterProfile 
     builder: (context) => StatefulBuilder(
       builder: (context, setState) {
         final fill = context.colors.surfaceContainerHighest;
+        final muted = context.type.bodySmall!.copyWith(color: context.colors.onSurfaceVariant);
         return AlertDialog(
-          title: Text('${p.name} login'),
+          title: const Text('Router login'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(p.name, style: context.type.bodyMedium!.copyWith(color: context.colors.onSurfaceVariant)),
+              const SizedBox(height: 14),
               PulseTargetField(
                 controller: user,
-                hint: 'Username (leave empty if none)',
+                hint: 'Username',
                 icon: PulseIcons.edit,
                 keyboardType: TextInputType.text,
                 fillColor: fill,
               ),
-              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+                child: Text('Leave it empty if your router only asks for a password.', style: muted),
+              ),
               _PasswordField(controller: pass, hidden: hide, fill: fill, onToggle: () => setState(() => hide = !hide)),
             ],
           ),
@@ -778,15 +785,16 @@ class _PasswordField extends StatelessWidget {
   }
 }
 
-class _Capabilities extends StatelessWidget {
+class _Capabilities extends ConsumerWidget {
   const _Capabilities({required this.profile});
   final RouterProfile profile;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final p = profile;
     final upnp = p.igd != null;
+    final native = ref.watch(routerDriverTypeProvider).value != null;
     Widget item(bool ok, String title, String subtitle) => PulseListItem(
       title: title,
       subtitle: subtitle,
@@ -799,18 +807,13 @@ class _Capabilities extends StatelessWidget {
         item(true, 'Every setting, in the router page', 'Full router settings opens its own admin page, logged in.'),
         item(upnp, 'Internet status and live traffic', upnp ? 'Read from the router over UPnP.' : 'Needs UPnP on.'),
         item(upnp && p.igd!.canMap, 'Port forwards', upnp ? 'Add and remove over UPnP.' : 'Needs UPnP on.'),
-        if (driverFor(p) != null)
-          item(
-            true,
-            'Devices, Wi-Fi and restart in Pulse',
-            'Signs in to your ${p.brand.label} with the saved login and shows them here.',
-          )
+        if (native)
+          item(true, 'Devices, Wi-Fi and restart in Pulse', 'Pulse can sign in to this router and show them here.')
         else
           item(
             false,
             'Devices, Wi-Fi and restart in Pulse',
-            'Not in Pulse yet for ${p.brand == RouterBrand.unknown ? 'this router' : '${p.brand.label} routers'}. '
-                'Use Full router settings.',
+            "Pulse can't sign in to this router yet. Full router settings has everything.",
           ),
       ],
     );

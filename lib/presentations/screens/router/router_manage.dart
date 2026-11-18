@@ -12,7 +12,7 @@ import 'router_screen.dart' show editRouterLogin, fmtRate, fmtUptime;
 /// for): a sign-in prompt, or the router's status, devices, Wi-Fi networks,
 /// its own port-forward rules and Restart.
 List<Widget> routerManageSections(BuildContext context, WidgetRef ref, RouterProfile p) {
-  if (driverFor(p) == null) return const [];
+  if (ref.watch(routerDriverTypeProvider).value == null) return const [];
   final cred = ref.watch(routerCredentialProvider).value;
   if (cred == null) return [const SizedBox(height: 12), _SignInCard(profile: p)];
   final m = ref.watch(routerManageProvider);
@@ -82,13 +82,10 @@ class _SignInCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Manage your ${profile.brand.label} here',
-            style: context.type.titleLarge!.copyWith(color: c.onPrimaryContainer),
-          ),
+          Text('Manage your router here', style: context.type.titleLarge!.copyWith(color: c.onPrimaryContainer)),
           const SizedBox(height: 6),
           Text(
-            'Sign in with the router password to see every device, switch and edit Wi-Fi networks, '
+            "Sign in with the router's admin password to see every device, switch and edit Wi-Fi networks, "
             'check the router itself and restart it — all in Pulse.',
             style: context.type.bodyMedium!.copyWith(color: c.onPrimaryContainer),
           ),
@@ -103,7 +100,7 @@ class _SignInCard extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Pulse signs in the way the router\'s own page does, so the page signs out if it is open in a browser.',
+            "Pulse signs in the way the router's own page does, so that page may sign out if it is open in a browser.",
             style: context.type.bodySmall!.copyWith(color: c.onPrimaryContainer),
           ),
         ],

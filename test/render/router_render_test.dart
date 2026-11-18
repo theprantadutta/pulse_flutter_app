@@ -10,6 +10,7 @@ import 'package:pulse/presentations/screens/router/router_screen.dart';
 import 'package:pulse/providers/database_provider.dart';
 import 'package:pulse/providers/router_manage_provider.dart';
 import 'package:pulse/providers/router_provider.dart';
+import 'package:pulse/services/net/router/drivers/driver_registry.dart';
 import 'package:pulse/services/net/router/drivers/router_driver.dart';
 import 'package:pulse/providers/settings_provider.dart';
 import 'package:pulse/services/net/lan/ssdp.dart';
@@ -119,6 +120,8 @@ void main() {
           ],
         ),
         routerCredentialProvider.overrideWith((ref) async => login ? const RouterCredential('admin', 'x') : null),
+        // A driver for the full profile, none for the basic one (no network probes in tests).
+        routerDriverTypeProvider.overrideWith((ref) async => profile?.igd == null ? null : kRouterDrivers.first),
       ],
     );
   }
