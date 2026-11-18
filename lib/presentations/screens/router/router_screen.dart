@@ -979,11 +979,22 @@ class _Capabilities extends ConsumerWidget {
                     size: 22,
                     color: caps?.trust(a) == ActionTrust.failing ? c.onSurfaceVariant : c.tertiary,
                   ),
-                  trailing: switch (caps?.trust(a)) {
-                    ActionTrust.verified => const PulsePill('Verified', tone: PulsePillTone.lime),
-                    ActionTrust.failing => const PulsePill('Hidden', tone: PulsePillTone.error),
-                    _ => const PulsePill('Try it', tone: PulsePillTone.outline),
-                  },
+                  // Each row opens where the change is made.
+                  onTap: caps?.trust(a) == ActionTrust.failing ? null : () => _open(context, ref, a, v),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      switch (caps?.trust(a)) {
+                        ActionTrust.verified => const PulsePill('Verified', tone: PulsePillTone.lime),
+                        ActionTrust.failing => const PulsePill('Hidden', tone: PulsePillTone.error),
+                        _ => const PulsePill('Try it', tone: PulsePillTone.outline),
+                      },
+                      if (caps?.trust(a) != ActionTrust.failing) ...[
+                        const SizedBox(width: 4),
+                        PulseIcon(PulseIcons.chevR, size: 18, color: c.onSurfaceVariant),
+                      ],
+                    ],
+                  ),
                 ),
           ],
         ),
@@ -1002,6 +1013,24 @@ class _Capabilities extends ConsumerWidget {
         ],
       ],
     );
+  }
+
+  void _open(BuildContext context, WidgetRef ref, String action, RouterManaged v) {
+    switch (action) {
+      case RouterActions.reboot:
+        restartRouter(
+          context,
+          ref,
+          name: v.overview == null ? profile.name : (routerModel(v.overview!) ?? profile.name),
+          host: profile.gateway,
+        );
+      case RouterActions.internetType || RouterActions.internetEdit:
+        context.push(Routes.routerInternet);
+      case RouterActions.guestToggle || RouterActions.guestEdit || RouterActions.iotToggle || RouterActions.iotEdit:
+        context.push('${Routes.routerWifi}?focus=guest');
+      default:
+        context.push(Routes.routerWifi);
+    }
   }
 
   /// Only list changes for networks this router has.
