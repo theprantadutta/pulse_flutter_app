@@ -4,18 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/widgets/pulse/pulse.dart';
-import '../../../providers/network_provider.dart';
 import '../../../providers/router_manage_provider.dart';
 import '../../../providers/router_provider.dart';
+import '../../../services/net/router/drivers/router_driver.dart';
 import '../../../services/net/router/router_probe.dart';
-import '../../../services/net/router/upnp_igd.dart';
+import '../../../services/net/router/verification.dart';
 import '../../navigation/destinations.dart';
-import 'router_manage.dart';
+import 'router_actions.dart';
+import 'router_format.dart';
 
-/// Router: Pulse's own view of the router on this network — who it is, the
-/// internet connection and live traffic it reports, UPnP port forwards, the
-/// saved login, and "Full router settings" for everything else (the router's
-/// own admin page inside Pulse, with the login filled in).
+/// Router hub: the router on this network at a glance (status, devices,
+/// traffic), tiles into full pages for what Pulse can do with it (Devices,
+/// Wi-Fi, Guest network, Port forwards) — only the ones this router actually
+/// answered — the router's details, Restart, the login, and "Full router
+/// settings" (its own admin page inside Pulse) for everything else.
 class RouterScreen extends ConsumerWidget {
   const RouterScreen({super.key});
 
@@ -29,11 +31,14 @@ class RouterScreen extends ConsumerWidget {
         PulseIconButton(
           icon: PulseIcons.refresh,
           tooltip: 'Detect again',
-          onPressed: () => ref.invalidate(routerProfileProvider),
+          onPressed: () {
+            ref.invalidate(routerProfileProvider);
+            ref.invalidate(routerManageProvider);
+          },
         ),
       ],
       children: switch (profile) {
-        AsyncData(value: final p?) => _sections(context, ref, p),
+        AsyncData(value: final p?) => [_Hub(profile: p)],
         AsyncData() => [
           const SizedBox(height: 48),
           const PulseEmptyState(
@@ -54,32 +59,121 @@ class RouterScreen extends ConsumerWidget {
       },
     );
   }
+}
 
-  List<Widget> _sections(BuildContext context, WidgetRef ref, RouterProfile p) => [
-    _Hero(profile: p),
-    ...routerManageSections(context, ref, p),
-    if (p.igd != null) ...[
-      const PulseSectionLabel('Internet'),
-      _InternetCard(profile: p),
-      const PulseSectionLabel('Port forwards'),
-      _PortForwards(profile: p),
-    ] else ...[
-      const SizedBox(height: 12),
-      _Tip(
-        icon: PulseIcons.info,
-        title: 'Turn on UPnP to see more here',
-        message: p.brand.cloudOnly
-            ? '${p.brand.label} routers are managed in their own app; Pulse can still open the router page if it has one.'
-            : 'With UPnP on, Pulse shows the internet connection, live traffic and port forwards straight from '
-                  'your router. It is usually under Advanced › NAT forwarding or Network in the router settings.',
-      ),
-    ],
-    const PulseSectionLabel('Router login'),
-    _LoginCard(profile: p),
-    const PulseSectionLabel('What Pulse can do with this router'),
-    _Capabilities(profile: p),
-    const SizedBox(height: 24),
-  ];
+/// Where the managed session stands.
+enum _Session { none, signedOut, needsLogin, loading, error, ready }
+
+class _Hub extends ConsumerWidget {
+  const _Hub({required this.profile});
+  final RouterProfile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = profile;
+    final type = ref.watch(routerDriverTypeProvider);
+    final cred = ref.watch(routerCredentialProvider).value;
+    final signedOut = ref.watch(routerSignedOutProvider).contains(p.id);
+    final native = type.value != null;
+    // Watching the manager signs in, so only when there's a login to use.
+    final m = native && cred != null && !signedOut ? ref.watch(routerManageProvider) : null;
+    final v = m?.value;
+    final session = !native
+        ? _Session.none
+        : cred == null
+        ? _Session.needsLogin
+        : signedOut
+        ? _Session.signedOut
+        : switch (m) {
+            AsyncData(value: _?) => _Session.ready,
+            AsyncError() => _Session.error,
+            _ => _Session.loading,
+          };
+
+    final hero = _Hero(profile: p, managed: v, native: native);
+    final status = <Widget>[
+      if (type.isLoading) const _Note(text: 'Checking whether Pulse can sign in to this router…', busy: true),
+      if (session == _Session.needsLogin || session == _Session.signedOut)
+        _SignInCard(profile: p, savedLogin: session == _Session.signedOut ? cred : null),
+      if (session == _Session.loading) const _Note(text: 'Signing in to your router…', busy: true),
+      if (session == _Session.error) _SignInError(profile: p, error: m!.error!, cred: cred),
+    ];
+    final tiles = _Tiles(profile: p, managed: v);
+    final internet = [
+      if (p.igd != null) ...[const PulseSectionLabel('Internet'), _InternetCard(profile: p)],
+    ];
+    final details = [
+      if (v?.overview != null) ...[const PulseSectionLabel('Router details'), _Overview(o: v!.overview!)],
+      if (v != null && v.actions.contains(RouterActions.reboot)) ...[
+        const PulseSectionLabel('Router actions'),
+        _Actions(profile: p, managed: v),
+      ],
+      if (p.igd == null) ...[
+        const SizedBox(height: 12),
+        _Tip(
+          icon: PulseIcons.info,
+          title: 'Turn on UPnP to see more here',
+          message: p.brand.cloudOnly
+              ? '${p.brand.label} routers are managed in their own app; Pulse can still open the router page if it '
+                    'has one.'
+              : 'With UPnP on, Pulse shows the internet connection, live traffic and port forwards straight from '
+                    'your router. It is usually under Advanced › NAT forwarding or Network in the router settings.',
+        ),
+      ],
+    ];
+    final account = [
+      if (native) ...[const PulseSectionLabel('Router login'), _LoginCard(profile: p, signedIn: v != null)],
+      const PulseSectionLabel('What Pulse can do here'),
+      _Capabilities(profile: p, managed: v, native: native),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, box) {
+        if (box.maxWidth < 900) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              hero,
+              for (final w in status) ...[const SizedBox(height: 12), w],
+              const SizedBox(height: 12),
+              tiles,
+              ...internet,
+              ...details,
+              ...account,
+              const SizedBox(height: 16),
+            ],
+          );
+        }
+        // Wide: status and pages on the left, details and login on the right.
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  hero,
+                  for (final w in status) ...[const SizedBox(height: 12), w],
+                  const SizedBox(height: 12),
+                  tiles,
+                  ...internet,
+                ],
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [...details, ...account, const SizedBox(height: 16)],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class _Detecting extends StatelessWidget {
@@ -95,7 +189,7 @@ class _Detecting extends StatelessWidget {
         Text('Looking at your router…', style: context.type.titleMedium),
         const SizedBox(height: 6),
         Text(
-          'Model, UPnP, and where its settings page lives',
+          'Model, UPnP, and what Pulse can do with it',
           style: context.type.bodyMedium!.copyWith(color: context.colors.onSurfaceVariant),
         ),
         const SizedBox(height: 20),
@@ -105,18 +199,42 @@ class _Detecting extends StatelessWidget {
   );
 }
 
-class _Hero extends StatelessWidget {
-  const _Hero({required this.profile});
+/// Name, model, online state, and the numbers that matter most.
+class _Hero extends ConsumerWidget {
+  const _Hero({required this.profile, required this.managed, required this.native});
   final RouterProfile profile;
+  final RouterManaged? managed;
+
+  /// Pulse has its own pages for this router, so the router's page is secondary.
+  final bool native;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final p = profile;
-    final info = p.igd?.info;
-    final sub = [p.gateway, if (info?.friendlyName != null && info!.friendlyName != p.name) info.friendlyName!];
+    final o = managed?.overview;
+    final live = p.igd != null ? ref.watch(routerLiveProvider).value : null;
+    final online = o?.internet ?? live?.status.connected;
+    final model = o == null ? null : routerModel(o);
+    final sub = [if (model != null && model != p.name) model, p.gateway];
+    final clients = managed?.clients ?? const <RouterClient>[];
+    final hasClientRates = clients.any((d) => d.downBps != null);
+    // With UPnP the Internet card below shows live traffic; don't repeat it.
+    final sumRates = p.igd == null && hasClientRates;
+    final down = sumRates ? clients.fold<double>(0, (a, d) => a + (d.downBps ?? 0)) : null;
+    final up = sumRates ? clients.fold<double>(0, (a, d) => a + (d.upBps ?? 0)) : null;
+    final uptime = o?.wanUptime ?? live?.status.uptime;
+    final stats = [
+      if (managed != null && managed!.features.contains(RouterFeature.clients))
+        PulseStat('Devices', '${clients.length}'),
+      if (down != null) PulseStat('Download', splitRate(down).$1, unit: splitRate(down).$2),
+      if (up != null) PulseStat('Upload', splitRate(up).$1, unit: splitRate(up).$2),
+      if (uptime != null) PulseStat('Online for', fmtUptime(uptime)),
+      if (o?.cpu != null && down == null) PulseStat('CPU', '${(o!.cpu! * 100).round()}', unit: '%'),
+      if (o?.memory != null && down == null) PulseStat('Memory', '${(o!.memory! * 100).round()}', unit: '%'),
+    ];
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       decoration: BoxDecoration(color: c.surfaceContainer, borderRadius: BorderRadius.circular(32)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,10 +246,10 @@ class _Hero extends StatelessWidget {
                   shape: PulseShape.cookie9,
                   tone: PulseTone.lime,
                   icon: PulseIcons.router,
-                  size: 64,
+                  size: 60,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,37 +262,68 @@ class _Hero extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (online != null) ...[
+                      const SizedBox(height: 8),
+                      PulsePill(
+                        online ? 'Internet connected' : 'Internet down',
+                        tone: online ? PulsePillTone.lime : PulsePillTone.error,
+                        dot: true,
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-          if (p.protocols.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [for (final pr in p.protocols) PulsePill(pr.label, tone: PulsePillTone.outline)],
+          if (stats.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, box) {
+                // Four tiles need ~320 dp; below that, two rows of two.
+                if (stats.length <= 2 || box.maxWidth >= 340) return PulseStatRow(stats: stats);
+                return Column(
+                  children: [
+                    PulseStatRow(stats: stats.take(2).toList()),
+                    const SizedBox(height: 6),
+                    PulseStatRow(stats: stats.skip(2).toList()),
+                  ],
+                );
+              },
             ),
           ],
-          const SizedBox(height: 18),
+          if (down != null && (o?.cpu != null || o?.memory != null)) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                if (o!.cpu != null)
+                  Expanded(
+                    child: _Meter(label: 'CPU', value: o.cpu!),
+                  ),
+                if (o.cpu != null && o.memory != null) const SizedBox(width: 16),
+                if (o.memory != null)
+                  Expanded(
+                    child: _Meter(label: 'Memory', value: o.memory!),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: PulseButton(
                   label: 'Full router settings',
                   icon: PulseIcons.settings,
-                  style: PulseButtonStyle.pink,
-                  size: PulseButtonSize.large,
+                  style: native ? PulseButtonStyle.tonal : PulseButtonStyle.pink,
                   onPressed: () => context.push(Routes.routerAdmin),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               PulseIconButton(
                 icon: PulseIcons.copy,
                 tooltip: 'Copy router address',
                 style: PulseIconButtonStyle.tonal,
-                visualSize: 56,
+                visualSize: 48,
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: p.adminUrl.toString()));
                   showPulseToast(context, 'Copied ${p.adminUrl}', icon: PulseIcons.copy);
@@ -182,11 +331,278 @@ class _Hero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _Meter extends StatelessWidget {
+  const _Meter({required this.label, required this.value});
+  final String label;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(label, style: context.type.labelLarge!.copyWith(color: c.onSurfaceVariant)),
+            const Spacer(),
+            Text('${(value * 100).round()}%', style: context.type.labelLarge),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: value.clamp(0, 1),
+            minHeight: 8,
+            backgroundColor: c.surfaceContainerHighest,
+            color: value > .85 ? c.error : c.tertiary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// "Archer AX53 v1.0": the hardware version alone when it already names the
+/// model, else model + version.
+String? routerModel(RouterOverview o) {
+  final hw = o.hardwareVersion;
+  if (hw == null) return o.model;
+  if (o.model == null || hw.toLowerCase().contains(o.model!.toLowerCase())) return hw;
+  return '${o.model} ${RegExp(r'^\d').hasMatch(hw) ? 'v$hw' : hw}';
+}
+
+/// Tiles into the full pages; only for things this router answered.
+class _Tiles extends ConsumerWidget {
+  const _Tiles({required this.profile, required this.managed});
+  final RouterProfile profile;
+  final RouterManaged? managed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final v = managed;
+    final igd = profile.igd;
+    final upnpCount = igd == null ? null : ref.watch(portMappingsProvider).value?.length;
+    final tiles = <_TileData>[];
+    if (v != null && v.features.contains(RouterFeature.clients)) {
+      final wired = v.clients.where((d) => d.link == ClientLink.wired).length;
+      tiles.add(
+        _TileData(
+          title: 'Devices',
+          value: '${v.clients.length}',
+          caption: '${v.clients.length - wired} on Wi-Fi · $wired wired',
+          icon: PulseIcons.laptop,
+          shape: PulseShape.circle,
+          tone: PulseTone.lavender,
+          route: Routes.routerDevices,
+        ),
+      );
+    }
+    final main = v?.wifi.where((n) => n.kind == WifiKind.main).toList() ?? const <WifiNetwork>[];
+    if (main.isNotEmpty) {
+      final on = main.where((n) => n.enabled == true).length;
+      tiles.add(
+        _TileData(
+          title: 'Wi-Fi',
+          value: on == 0 ? 'Off' : '$on on',
+          caption: main.first.ssid ?? '${main.length} bands',
+          icon: PulseIcons.wifi,
+          shape: PulseShape.cookie7,
+          tone: PulseTone.lime,
+          route: Routes.routerWifi,
+        ),
+      );
+    }
+    final extra = v?.wifi.where((n) => n.kind != WifiKind.main).toList() ?? const <WifiNetwork>[];
+    if (extra.isNotEmpty) {
+      final guest = extra.where((n) => n.guest).toList();
+      final on = (guest.isEmpty ? extra : guest).any((n) => n.enabled == true);
+      tiles.add(
+        _TileData(
+          title: guest.isEmpty ? 'Smart-home' : 'Guest network',
+          value: on ? 'On' : 'Off',
+          caption: (guest.isEmpty ? extra : guest).first.ssid ?? 'For visitors',
+          icon: PulseIcons.share,
+          shape: PulseShape.cookie9,
+          tone: PulseTone.pink,
+          route: '${Routes.routerWifi}?focus=guest',
+        ),
+      );
+    }
+    final rules = v?.forwards.length ?? 0;
+    if (igd != null || rules > 0) {
+      final n = (upnpCount ?? 0) + rules;
+      tiles.add(
+        _TileData(
+          title: 'Port forwards',
+          value: upnpCount == null && igd != null ? '…' : '$n',
+          caption: igd != null ? 'UPnP on' : 'Router rules',
+          icon: PulseIcons.port,
+          shape: PulseShape.clover4,
+          tone: PulseTone.lavender,
+          route: Routes.routerPorts,
+        ),
+      );
+    }
+    if (tiles.isEmpty) return const SizedBox.shrink();
+    return LayoutBuilder(
+      builder: (context, box) {
+        final cols = box.maxWidth >= 640 ? 4 : 2;
+        final w = (box.maxWidth - (cols - 1) * 10) / cols;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [for (final t in tiles) SizedBox(width: w, child: _Tile(t))],
+        );
+      },
+    );
+  }
+}
+
+class _TileData {
+  const _TileData({
+    required this.title,
+    required this.value,
+    required this.caption,
+    required this.icon,
+    required this.shape,
+    required this.tone,
+    required this.route,
+  });
+  final String title, value, caption, route;
+  final PulseIcons icon;
+  final PulseShape shape;
+  final PulseTone tone;
+}
+
+class _Tile extends StatelessWidget {
+  const _Tile(this.t);
+  final _TileData t;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Semantics(
+      button: true,
+      label: '${t.title}: ${t.value}, ${t.caption}',
+      excludeSemantics: true,
+      child: PulseCard(
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        onTap: () => context.push(t.route),
+        child: SizedBox(
+          height: 112,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  PulseShapeBadge(shape: t.shape, tone: t.tone, icon: t.icon, size: 40),
+                  const Spacer(),
+                  PulseIcon(PulseIcons.chevR, size: 18, color: c.onSurfaceVariant),
+                ],
+              ),
+              const Spacer(),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(t.value, style: pulseNumber(26).copyWith(color: c.onSurface)),
+              ),
+              Text(t.title, style: context.type.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(
+                t.caption,
+                style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Note extends StatelessWidget {
+  const _Note({required this.text, this.busy = false});
+  final String text;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) => PulseCard(
+    child: Row(
+      children: [
+        if (busy) const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+        if (busy) const SizedBox(width: 14),
+        Expanded(child: Text(text)),
+      ],
+    ),
+  );
+}
+
+class _SignInCard extends ConsumerWidget {
+  const _SignInCard({required this.profile, this.savedLogin});
+  final RouterProfile profile;
+
+  /// Set after signing out with the password still saved: one tap signs in.
+  final RouterCredential? savedLogin;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: c.primaryContainer, borderRadius: BorderRadius.circular(28)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
-            'Opens ${p.adminUrl.host}${p.adminUrl.hasPort ? ':${p.adminUrl.port}' : ''} inside Pulse, '
-            'with your saved login filled in.',
-            style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
+            savedLogin != null ? 'Signed out of the router' : 'Manage your router here',
+            style: context.type.titleLarge!.copyWith(color: c.onPrimaryContainer),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            savedLogin != null
+                ? 'Your password is still saved on this device. Sign in again with one tap.'
+                : "Sign in with the router's admin password to see every device, switch and edit Wi-Fi and the "
+                      'guest network, check the router itself and restart it, all in Pulse.',
+            style: context.type.bodyMedium!.copyWith(color: c.onPrimaryContainer),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              PulseButton(
+                label: 'Sign in to router',
+                icon: PulseIcons.shield,
+                style: PulseButtonStyle.pink,
+                onPressed: savedLogin != null
+                    ? () => ref.read(routerSignedOutProvider.notifier).set(profile.id, false)
+                    : () => editRouterLogin(context, ref, profile, null),
+              ),
+              if (savedLogin != null)
+                PulseButton(
+                  label: 'Other password',
+                  icon: PulseIcons.edit,
+                  style: PulseButtonStyle.outlined,
+                  onPressed: () async {
+                    await editRouterLogin(context, ref, profile, savedLogin);
+                    ref.read(routerSignedOutProvider.notifier).set(profile.id, false);
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "Pulse signs in the way the router's own page does, so that page may sign out if it is open in a browser.",
+            style: context.type.bodySmall!.copyWith(color: c.onPrimaryContainer),
           ),
         ],
       ),
@@ -194,18 +610,315 @@ class _Hero extends StatelessWidget {
   }
 }
 
-String fmtRate(double? bps) {
-  if (bps == null) return '—';
-  if (bps >= 1e9) return '${(bps / 1e9).toStringAsFixed(2)} Gbps';
-  if (bps >= 1e6) return '${(bps / 1e6).toStringAsFixed(bps >= 1e8 ? 0 : 1)} Mbps';
-  if (bps >= 1e3) return '${(bps / 1e3).toStringAsFixed(0)} kbps';
-  return '${bps.toStringAsFixed(0)} bps';
+class _SignInError extends ConsumerWidget {
+  const _SignInError({required this.profile, required this.error, required this.cred});
+  final RouterProfile profile;
+  final Object error;
+  final RouterCredential? cred;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final e = error;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PulseErrorBanner(
+          title: "Couldn't sign in to the router",
+          message: e is RouterDriverException ? e.message : '$e',
+          onRetry: () => ref.invalidate(routerManageProvider),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: PulseButton(
+            label: 'Change login',
+            icon: PulseIcons.edit,
+            style: PulseButtonStyle.tonal,
+            size: PulseButtonSize.small,
+            onPressed: () => editRouterLogin(context, ref, profile, cred),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-String fmtUptime(Duration d) {
-  if (d.inDays > 0) return '${d.inDays} d ${d.inHours % 24} h';
-  if (d.inHours > 0) return '${d.inHours} h ${d.inMinutes % 60} min';
-  return '${d.inMinutes} min';
+class _Overview extends StatefulWidget {
+  const _Overview({required this.o});
+  final RouterOverview o;
+
+  @override
+  State<_Overview> createState() => _OverviewState();
+}
+
+class _OverviewState extends State<_Overview> {
+  bool _showWan = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final o = widget.o;
+    String mask(String ip) {
+      final p = ip.split('.');
+      return p.length == 4 ? '${p[0]}.••.••.${p[3]}' : '••••';
+    }
+
+    final model = routerModel(o);
+    return PulseCard(
+      padding: const EdgeInsets.fromLTRB(18, 12, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (model != null) _Row(label: 'Model', value: model),
+          if (o.firmware != null) _Row(label: 'Firmware', value: o.firmware!),
+          if (o.wanIp != null)
+            _Row(
+              label: 'Internet IP',
+              value: _showWan ? o.wanIp! : mask(o.wanIp!),
+              trailing: PulseIconButton(
+                icon: _showWan ? PulseIcons.shield : PulseIcons.search,
+                tooltip: _showWan ? 'Hide address' : 'Show address',
+                visualSize: 32,
+                iconSize: 16,
+                onPressed: () => setState(() => _showWan = !_showWan),
+              ),
+            ),
+          if (o.wanType != null) _Row(label: 'Connection', value: _wanType(o.wanType!)),
+          if (o.lanIp != null) _Row(label: 'Router address', value: o.lanIp!),
+          if (o.dhcpServer != null) _Row(label: 'DHCP server', value: o.dhcpServer! ? 'On' : 'Off'),
+          if (o.ipv6 != null) _Row(label: 'IPv6', value: o.ipv6!),
+        ],
+      ),
+    );
+  }
+
+  static String _wanType(String t) => switch (t.toLowerCase()) {
+    'dhcp' || 'dynamic' => 'Dynamic IP',
+    'pppoe' => 'PPPoE',
+    'static' => 'Static IP',
+    'l2tp' => 'L2TP',
+    'pptp' => 'PPTP',
+    _ => t,
+  };
+}
+
+class _Actions extends ConsumerWidget {
+  const _Actions({required this.profile, required this.managed});
+  final RouterProfile profile;
+  final RouterManaged managed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final caps = ref.watch(routerCapabilitiesProvider).value;
+    final offers = caps?.offers(RouterActions.reboot) ?? true;
+    if (!offers) return const SizedBox.shrink();
+    return PulseSegmentedList(
+      animate: false,
+      children: [
+        PulseListItem(
+          title: 'Restart router',
+          subtitle: 'Internet and Wi-Fi drop for a minute or two; Pulse waits until it is back',
+          subtitleMaxLines: 2,
+          leading: PulseIcon(PulseIcons.power, size: 22, color: c.error),
+          trailing: const RouterTrustPill(RouterActions.reboot),
+          onTap: () => restartRouter(
+            context,
+            ref,
+            name: managed.overview == null ? profile.name : (routerModel(managed.overview!) ?? profile.name),
+            host: profile.gateway,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The login: state, sign in / out, change, forget.
+class _LoginCard extends ConsumerWidget {
+  const _LoginCard({required this.profile, required this.signedIn});
+  final RouterProfile profile;
+  final bool signedIn;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final cred = ref.watch(routerCredentialProvider).value;
+    final saved = ref.watch(routerLoginSavedProvider).value ?? false;
+    final signedOut = ref.watch(routerSignedOutProvider).contains(profile.id);
+    final title = cred == null
+        ? 'Not signed in'
+        : signedOut
+        ? 'Signed out · password saved'
+        : signedIn
+        ? 'Signed in'
+        : 'Signing in…';
+    final sub = cred == null
+        ? 'Pulse only saves the password if you tick "Remember on this device".'
+        : saved
+        ? 'Password saved on this device, sent only to your router.'
+        : 'Password kept until you close Pulse, then forgotten.';
+    return PulseCard(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              PulseIcon(
+                signedIn ? PulseIcons.check : PulseIcons.shield,
+                size: 22,
+                color: signedIn ? c.tertiary : c.onSurfaceVariant,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: context.type.titleMedium),
+                    Text(sub, style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              PulseButton(
+                label: cred == null ? 'Sign in' : 'Change password',
+                icon: cred == null ? PulseIcons.plus : PulseIcons.edit,
+                style: PulseButtonStyle.tonal,
+                size: PulseButtonSize.small,
+                onPressed: () => editRouterLogin(context, ref, profile, cred),
+              ),
+              if (cred != null && !signedOut)
+                PulseButton(
+                  label: 'Sign out',
+                  icon: PulseIcons.power,
+                  style: PulseButtonStyle.outlined,
+                  size: PulseButtonSize.small,
+                  onPressed: () {
+                    // Ends the session (the manager signs out of the router as
+                    // it disposes); a saved password stays for one-tap sign-in.
+                    if (saved) {
+                      ref.read(routerSignedOutProvider.notifier).set(profile.id, true);
+                    } else {
+                      ref.read(sessionRouterLoginProvider.notifier).remove(profile.id);
+                    }
+                    showPulseToast(context, 'Signed out of the router', icon: PulseIcons.check);
+                  },
+                ),
+              if (saved)
+                PulseButton(
+                  label: 'Forget password',
+                  icon: PulseIcons.trash,
+                  style: PulseButtonStyle.outlined,
+                  size: PulseButtonSize.small,
+                  onPressed: () async {
+                    await RouterVault.delete(profile.id);
+                    ref.read(sessionRouterLoginProvider.notifier).remove(profile.id);
+                    ref.read(routerSignedOutProvider.notifier).set(profile.id, false);
+                    ref.invalidate(routerCredentialProvider);
+                    ref.invalidate(routerLoginSavedProvider);
+                    if (context.mounted) {
+                      showPulseToast(context, 'Password removed from this device', icon: PulseIcons.trash);
+                    }
+                  },
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What Pulse can read and change on this router, and how sure it is.
+class _Capabilities extends ConsumerWidget {
+  const _Capabilities({required this.profile, required this.managed, required this.native});
+  final RouterProfile profile;
+  final RouterManaged? managed;
+  final bool native;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final p = profile;
+    final upnp = p.igd != null;
+    final v = managed;
+    final caps = ref.watch(routerCapabilitiesProvider).value;
+    Widget item(bool ok, String title, String subtitle, {Widget? trailing}) => PulseListItem(
+      title: title,
+      subtitle: subtitle,
+      subtitleMaxLines: 3,
+      leading: PulseIcon(ok ? PulseIcons.check : PulseIcons.x, size: 22, color: ok ? c.tertiary : c.onSurfaceVariant),
+      trailing: trailing,
+    );
+    final changes = [
+      for (final a in v?.actions ?? const <String>{})
+        if (_relevant(a, v!)) a,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PulseSegmentedList(
+          animate: false,
+          children: [
+            item(true, 'Every setting, in the router page', 'Full router settings opens its own admin page.'),
+            item(upnp, 'Internet status and live traffic', upnp ? 'Read from the router over UPnP.' : 'Needs UPnP on.'),
+            item(upnp && p.igd!.canMap, 'Port forwards', upnp ? 'Add and remove over UPnP.' : 'Needs UPnP on.'),
+            if (!native)
+              item(
+                false,
+                'Devices, Wi-Fi and restart in Pulse',
+                "Pulse can't sign in to this router model yet. Full router settings has everything.",
+              )
+            else if (v == null)
+              item(true, 'Devices, Wi-Fi and restart in Pulse', 'Pulse can sign in to this router. Sign in above.')
+            else
+              for (final a in changes)
+                PulseListItem(
+                  title: RouterActions.label(a),
+                  minHeight: 52,
+                  leading: PulseIcon(
+                    caps?.trust(a) == ActionTrust.failing ? PulseIcons.x : PulseIcons.check,
+                    size: 22,
+                    color: caps?.trust(a) == ActionTrust.failing ? c.onSurfaceVariant : c.tertiary,
+                  ),
+                  trailing: switch (caps?.trust(a)) {
+                    ActionTrust.verified => const PulsePill('Verified', tone: PulsePillTone.lime),
+                    ActionTrust.failing => const PulsePill('Hidden', tone: PulsePillTone.error),
+                    _ => const PulsePill('Try it', tone: PulsePillTone.outline),
+                  },
+                ),
+          ],
+        ),
+        if (v != null) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              caps == null
+                  ? 'This router did not report its model and firmware, so every change is "Try it".'
+                  : 'Verified: confirmed on this model and firmware. Try it: not confirmed yet; Pulse reads the '
+                        'setting back and asks whether it worked. Hidden: reported not to work here.',
+              style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Only list changes for networks this router has.
+  static bool _relevant(String a, RouterManaged v) => switch (a) {
+    RouterActions.guestToggle || RouterActions.guestEdit => v.wifi.any((n) => n.kind == WifiKind.guest),
+    RouterActions.iotToggle || RouterActions.iotEdit => v.wifi.any((n) => n.kind == WifiKind.iot),
+    RouterActions.wifiToggle || RouterActions.wifiEdit => v.wifi.any((n) => n.kind == WifiKind.main),
+    _ => true,
+  };
 }
 
 class _InternetCard extends ConsumerStatefulWidget {
@@ -397,326 +1110,6 @@ class _Row extends StatelessWidget {
   );
 }
 
-class _PortForwards extends ConsumerWidget {
-  const _PortForwards({required this.profile});
-  final RouterProfile profile;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
-    final list = ref.watch(portMappingsProvider);
-    final igd = profile.igd!;
-    final items = list.value ?? const <PortMapping>[];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (list.isLoading && items.isEmpty)
-          const PulseCard(
-            child: SizedBox(height: 56, child: Center(child: CircularProgressIndicator())),
-          )
-        else if (items.isEmpty)
-          PulseCard(
-            child: Text(
-              'No port forwards. Apps and game consoles add them here when they need incoming connections, '
-              'and you can add your own.',
-              style: context.type.bodyMedium!.copyWith(color: c.onSurfaceVariant),
-            ),
-          )
-        else
-          PulseSegmentedList(
-            animate: false,
-            children: [
-              for (final m in items)
-                PulseListItem(
-                  title: '${m.protocol} ${m.externalPort} → ${m.internalClient}:${m.internalPort}',
-                  subtitle: [
-                    m.description.isEmpty ? 'No description' : m.description,
-                    if (!m.enabled) 'off',
-                    if (m.leaseSeconds > 0) 'expires in ${fmtUptime(Duration(seconds: m.leaseSeconds))}',
-                  ].join(' · '),
-                  leading: PulseIcon(PulseIcons.port, size: 22, color: c.onSurfaceVariant),
-                  trailing: PulseIconButton(
-                    icon: PulseIcons.trash,
-                    tooltip: 'Remove ${m.protocol} ${m.externalPort}',
-                    visualSize: 36,
-                    iconSize: 18,
-                    onPressed: () => _remove(context, ref, igd, m),
-                  ),
-                ),
-            ],
-          ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            IntrinsicWidth(
-              child: PulseButton(
-                label: 'Add port forward',
-                icon: PulseIcons.plus,
-                style: PulseButtonStyle.tonal,
-                size: PulseButtonSize.small,
-                onPressed: () => _add(context, ref, igd),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Through UPnP: some routers only accept forwards to the device asking.',
-                style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<void> _remove(BuildContext context, WidgetRef ref, IgdDevice igd, PortMapping m) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Remove ${m.protocol} ${m.externalPort}?'),
-        content: Text(
-          'Incoming connections on port ${m.externalPort} will no longer reach ${m.internalClient}. '
-          '${m.description.isEmpty ? '' : 'Whatever added it ("${m.description}") may add it again.'}',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Remove')),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    try {
-      await UpnpIgd.deleteMapping(igd, m);
-      if (context.mounted) showPulseToast(context, 'Removed ${m.protocol} ${m.externalPort}', icon: PulseIcons.trash);
-    } on UpnpFault catch (e) {
-      if (context.mounted) showPulseToast(context, e.friendly, icon: PulseIcons.info);
-    } on Object catch (e) {
-      if (context.mounted) showPulseToast(context, "Couldn't reach the router: $e", icon: PulseIcons.info);
-    }
-    ref.invalidate(portMappingsProvider);
-  }
-
-  Future<void> _add(BuildContext context, WidgetRef ref, IgdDevice igd) async {
-    final me = ref.read(networkInfoProvider).value?.link.localIpv4 ?? '';
-    final m = await showDialog<PortMapping>(
-      context: context,
-      builder: (_) => _AddForwardDialog(defaultIp: me),
-    );
-    if (m == null || !context.mounted) return;
-    try {
-      await UpnpIgd.addMapping(igd, m);
-      if (context.mounted) {
-        showPulseToast(
-          context,
-          'Forwarding ${m.protocol} ${m.externalPort} to ${m.internalClient}',
-          icon: PulseIcons.check,
-        );
-      }
-    } on UpnpFault catch (e) {
-      if (context.mounted) showPulseToast(context, e.friendly, icon: PulseIcons.info);
-    } on Object catch (e) {
-      if (context.mounted) showPulseToast(context, "Couldn't reach the router: $e", icon: PulseIcons.info);
-    }
-    ref.invalidate(portMappingsProvider);
-  }
-}
-
-class _AddForwardDialog extends StatefulWidget {
-  const _AddForwardDialog({required this.defaultIp});
-  final String defaultIp;
-
-  @override
-  State<_AddForwardDialog> createState() => _AddForwardDialogState();
-}
-
-class _AddForwardDialogState extends State<_AddForwardDialog> {
-  String _proto = 'TCP';
-  late final _ip = TextEditingController(text: widget.defaultIp);
-  final _ext = TextEditingController();
-  final _int = TextEditingController();
-  final _desc = TextEditingController(text: 'Pulse');
-
-  @override
-  void dispose() {
-    for (final c in [_ip, _ext, _int, _desc]) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  int? _port(TextEditingController c) {
-    final v = int.tryParse(c.text.trim());
-    return v != null && v > 0 && v < 65536 ? v : null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final fill = context.colors.surfaceContainerHighest;
-    final ext = _port(_ext);
-    final ip = _ip.text.trim();
-    final valid =
-        ext != null &&
-        RegExp(r'^\d{1,3}(\.\d{1,3}){3}$').hasMatch(ip) &&
-        (_int.text.trim().isEmpty || _port(_int) != null);
-    return AlertDialog(
-      title: const Text('Add port forward'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            PulseButtonGroup<String>(
-              small: true,
-              segments: const [PulseSegment('TCP', 'TCP'), PulseSegment('UDP', 'UDP')],
-              selected: _proto,
-              onChanged: (v) => setState(() => _proto = v),
-            ),
-            const SizedBox(height: 12),
-            PulseTargetField(
-              controller: _ext,
-              hint: 'External port',
-              icon: PulseIcons.globe,
-              keyboardType: TextInputType.number,
-              fillColor: fill,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 8),
-            PulseTargetField(
-              controller: _ip,
-              hint: 'Device IP',
-              icon: PulseIcons.laptop,
-              keyboardType: TextInputType.number,
-              fillColor: fill,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 8),
-            PulseTargetField(
-              controller: _int,
-              hint: 'Device port (same as external)',
-              icon: PulseIcons.port,
-              keyboardType: TextInputType.number,
-              fillColor: fill,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 8),
-            PulseTargetField(
-              controller: _desc,
-              hint: 'Description',
-              icon: PulseIcons.edit,
-              keyboardType: TextInputType.text,
-              fillColor: fill,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        TextButton(
-          onPressed: !valid
-              ? null
-              : () => Navigator.pop(
-                  context,
-                  PortMapping(
-                    protocol: _proto,
-                    externalPort: ext,
-                    internalClient: ip,
-                    internalPort: _port(_int) ?? ext,
-                    description: _desc.text.trim().isEmpty ? 'Pulse' : _desc.text.trim(),
-                  ),
-                ),
-          child: const Text('Add'),
-        ),
-      ],
-    );
-  }
-}
-
-class _LoginCard extends ConsumerWidget {
-  const _LoginCard({required this.profile});
-  final RouterProfile profile;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
-    final cred = ref.watch(routerCredentialProvider).value;
-    final saved = ref.watch(routerLoginSavedProvider).value ?? false;
-    return PulseCard(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              PulseIcon(cred == null ? PulseIcons.shield : PulseIcons.check, size: 22, color: c.onSurfaceVariant),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      cred == null
-                          ? 'Not signed in'
-                          : saved
-                          ? 'Login saved'
-                          : 'Signed in for this session',
-                      style: context.type.titleMedium,
-                    ),
-                    Text(
-                      cred == null
-                          ? 'Sign in so Pulse can manage the router and fill in its page.'
-                          : cred.username.isEmpty
-                          ? 'Password only'
-                          : 'User "${cred.username}"',
-                      style: context.type.bodyMedium!.copyWith(color: c.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              IntrinsicWidth(
-                child: PulseButton(
-                  label: cred == null ? 'Sign in' : 'Change',
-                  icon: cred == null ? PulseIcons.plus : PulseIcons.edit,
-                  style: PulseButtonStyle.tonal,
-                  size: PulseButtonSize.small,
-                  onPressed: () => editRouterLogin(context, ref, profile, cred),
-                ),
-              ),
-              if (cred != null) ...[
-                const SizedBox(width: 8),
-                IntrinsicWidth(
-                  child: PulseButton(
-                    label: saved ? 'Forget password' : 'Sign out',
-                    icon: PulseIcons.trash,
-                    style: PulseButtonStyle.outlined,
-                    size: PulseButtonSize.small,
-                    onPressed: () async {
-                      await RouterVault.delete(profile.id);
-                      ref.read(sessionRouterLoginProvider.notifier).remove(profile.id);
-                      ref.invalidate(routerCredentialProvider);
-                      if (context.mounted) showPulseToast(context, 'Router login removed', icon: PulseIcons.trash);
-                    },
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Pulse only saves the login if you tick 'Remember on this device'; then it stays in the system keystore and goes nowhere but your router.",
-            style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Asks for the router's username and password and saves them in the vault.
 Future<void> editRouterLogin(BuildContext context, WidgetRef ref, RouterProfile p, RouterCredential? current) async {
   final user = TextEditingController(text: current?.username ?? '');
@@ -839,41 +1232,6 @@ class _PasswordField extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Capabilities extends ConsumerWidget {
-  const _Capabilities({required this.profile});
-  final RouterProfile profile;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
-    final p = profile;
-    final upnp = p.igd != null;
-    final native = ref.watch(routerDriverTypeProvider).value != null;
-    Widget item(bool ok, String title, String subtitle) => PulseListItem(
-      title: title,
-      subtitle: subtitle,
-      subtitleMaxLines: 3,
-      leading: PulseIcon(ok ? PulseIcons.check : PulseIcons.x, size: 22, color: ok ? c.tertiary : c.onSurfaceVariant),
-    );
-    return PulseSegmentedList(
-      animate: false,
-      children: [
-        item(true, 'Every setting, in the router page', 'Full router settings opens its own admin page, logged in.'),
-        item(upnp, 'Internet status and live traffic', upnp ? 'Read from the router over UPnP.' : 'Needs UPnP on.'),
-        item(upnp && p.igd!.canMap, 'Port forwards', upnp ? 'Add and remove over UPnP.' : 'Needs UPnP on.'),
-        if (native)
-          item(true, 'Devices, Wi-Fi and restart in Pulse', 'Pulse can sign in to this router and show them here.')
-        else
-          item(
-            false,
-            'Devices, Wi-Fi and restart in Pulse',
-            "Pulse can't sign in to this router yet. Full router settings has everything.",
-          ),
-      ],
     );
   }
 }

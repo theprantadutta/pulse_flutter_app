@@ -4,6 +4,43 @@ import '../router_probe.dart';
 /// screen shows only these; everything else stays in "Full router settings".
 enum RouterFeature { overview, clients, wifi, guestWifi, reboot, portForwards, dhcpLeases }
 
+/// Changes a driver can make, as the ids the backend verifies per router
+/// model + firmware ("Did it work?" reports). Reads need no verification: a
+/// read either parses or the section isn't shown.
+abstract final class RouterActions {
+  static const wifiToggle = 'wifi.toggle';
+  static const wifiEdit = 'wifi.edit';
+  static const guestToggle = 'guest.toggle';
+  static const guestEdit = 'guest.edit';
+  static const iotToggle = 'iot.toggle';
+  static const iotEdit = 'iot.edit';
+  static const reboot = 'system.reboot';
+
+  static String toggle(WifiNetwork n) => switch (n.kind) {
+    WifiKind.main => wifiToggle,
+    WifiKind.guest => guestToggle,
+    WifiKind.iot => iotToggle,
+  };
+
+  static String edit(WifiNetwork n) => switch (n.kind) {
+    WifiKind.main => wifiEdit,
+    WifiKind.guest => guestEdit,
+    WifiKind.iot => iotEdit,
+  };
+
+  /// What the person sees in "Did it work?" and in the capability list.
+  static String label(String id) => switch (id) {
+    wifiToggle => 'Wi-Fi on / off',
+    wifiEdit => 'Wi-Fi name and password',
+    guestToggle => 'Guest network on / off',
+    guestEdit => 'Guest name and password',
+    iotToggle => 'Smart-home network on / off',
+    iotEdit => 'Smart-home name and password',
+    reboot => 'Restart the router',
+    _ => id,
+  };
+}
+
 /// Why a driver call failed, in terms the person can act on.
 enum RouterErrorKind { wrongPassword, lockedOut, busy, unsupported, network, unexpected }
 
@@ -44,6 +81,7 @@ class RouterOverview {
     this.memory,
     this.dhcpServer,
     this.ipv6,
+    this.internet,
   });
 
   final String? model;
@@ -64,6 +102,9 @@ class RouterOverview {
   final double? memory;
   final bool? dhcpServer;
   final String? ipv6;
+
+  /// Whether the router says it is online (null when it doesn't say).
+  final bool? internet;
 }
 
 enum ClientLink { wired, wifi2g, wifi5g, wifi6g, guest, unknown }
@@ -81,6 +122,7 @@ class RouterClient {
     this.signal,
     this.online,
     this.trafficBytes,
+    this.kind,
   });
 
   final String mac;
@@ -95,16 +137,22 @@ class RouterClient {
   final int? signal;
   final Duration? online;
   final int? trafficBytes;
+
+  /// The router's guess at the device type ("phone", "laptop", "tv"…), lower case.
+  final String? kind;
 }
 
 enum WifiBand { b24, b5, b6 }
+
+/// The main network, the guest network, or a separate smart-home (IoT) one.
+enum WifiKind { main, guest, iot }
 
 /// One Wi-Fi network (a band, main or guest).
 class WifiNetwork {
   const WifiNetwork({
     required this.id,
     required this.band,
-    required this.guest,
+    this.kind = WifiKind.main,
     this.enabled,
     this.ssid,
     this.password,
@@ -116,13 +164,21 @@ class WifiNetwork {
   /// Driver-specific id (TP-Link form name: wireless_2g, guest_5g…).
   final String id;
   final WifiBand band;
-  final bool guest;
+  final WifiKind kind;
   final bool? enabled;
   final String? ssid;
   final String? password;
   final bool? hidden;
   final String? security;
   final int? channel;
+
+  bool get guest => kind == WifiKind.guest;
+
+  String get kindLabel => switch (kind) {
+    WifiKind.main => 'Wi-Fi',
+    WifiKind.guest => 'Guest network',
+    WifiKind.iot => 'Smart-home network',
+  };
 
   String get bandLabel => switch (band) {
     WifiBand.b24 => '2.4 GHz',
@@ -166,6 +222,10 @@ class DhcpLease {
 /// [signIn] first and [signOut] when done (many routers allow a single admin).
 abstract class RouterDriver {
   Set<RouterFeature> get features;
+
+  /// The [RouterActions] this driver implements. The UI still offers each
+  /// one only as verified or "Try it" (see RouterCapabilities).
+  Set<String> get actions;
 
   Future<void> signIn(RouterCredential login);
   Future<void> signOut();

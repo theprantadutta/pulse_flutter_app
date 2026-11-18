@@ -19,7 +19,11 @@ import '../screens/settings/support_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/speed/speed_screen.dart';
 import '../screens/tools/tools_hub_screen.dart';
+import '../../services/net/router/drivers/router_driver.dart' show WifiKind;
 import '../screens/router/router_admin_screen.dart';
+import '../screens/router/router_devices_screen.dart';
+import '../screens/router/router_ports_screen.dart';
+import '../screens/router/router_wifi_screen.dart';
 import '../screens/router/router_screen.dart';
 import '../screens/trace/trace_screen.dart';
 import '../screens/widgets/widget_config_screen.dart';
@@ -157,6 +161,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           _route(Routes.support, (s) => const SupportScreen()),
           _route(Routes.widgets, (s) => const WidgetsScreen()),
           _route(Routes.router, (s) => const RouterScreen()),
+          _route(Routes.routerDevices, (s) => const RouterDevicesScreen()),
+          _route(
+            Routes.routerWifi,
+            (s) => RouterWifiScreen(focus: s.uri.queryParameters['focus'] == 'guest' ? WifiKind.guest : null),
+          ),
+          _route(Routes.routerPorts, (s) => const RouterPortsScreen()),
           _route(Routes.tools, (s) => const ToolsHubScreen()),
         ],
       ),

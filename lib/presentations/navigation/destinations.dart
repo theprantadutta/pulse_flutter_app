@@ -32,6 +32,11 @@ class Routes {
   /// The router on this network; `/router/admin` is its own admin page in Pulse.
   static const router = '/router';
   static const routerAdmin = '/router/admin';
+
+  /// Full pages from the Router hub (`wifi?focus=guest` opens the guest network first).
+  static const routerDevices = '/router/devices';
+  static const routerWifi = '/router/wifi';
+  static const routerPorts = '/router/ports';
 }
 
 const kTabRoots = <MobileTab, String>{
@@ -82,7 +87,7 @@ String? parentRoute(String location) {
   if (_under(location, Routes.about)) return Routes.settings;
   if (_under(location, Routes.support)) return Routes.settings;
   if (_under(location, Routes.widgets)) return Routes.settings;
-  if (_under(location, Routes.routerAdmin)) return Routes.router;
+  if (location.startsWith('${Routes.router}/')) return Routes.router;
   if (_under(location, Routes.alertRule)) return Routes.alerts;
   if (_under(location, Routes.alerts)) return Routes.monitor;
   if (_under(location, Routes.pingDetail)) return Routes.ping;

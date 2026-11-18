@@ -40,12 +40,17 @@ void main() {
       final o = await d.overview();
       stdout.writeln(
         'model ${o.model} hw ${o.hardwareVersion} fw ${o.firmware} cpu ${o.cpu} mem ${o.memory} '
-        'wan ${o.wanType} up ${o.wanUptime}',
+        'wan ${o.wanType} up ${o.wanUptime} internet ${o.internet}',
       );
+      expect(o.model, isNotNull);
+      expect(o.firmware, isNotNull);
       final c = await d.clients();
-      stdout.writeln('clients: ${c.length}');
+      stdout.writeln(
+        'clients: ${c.length}, with live rates ${c.where((x) => x.downBps != null).length}, '
+        'typed ${c.where((x) => x.kind != null).length}',
+      );
       for (final w in await d.wifi()) {
-        stdout.writeln('wifi ${w.id}: ${w.enabled} "${w.ssid}" ch ${w.channel}');
+        stdout.writeln('wifi ${w.id} (${w.kind.name}): ${w.enabled} ch ${w.channel} security ${w.security}');
       }
       stdout.writeln('forwards: ${(await d.forwards()).length}');
     } finally {

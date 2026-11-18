@@ -6,7 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:pulse/data/db/app_database.dart';
+import 'package:pulse/presentations/screens/router/router_devices_screen.dart';
 import 'package:pulse/presentations/screens/router/router_screen.dart';
+import 'package:pulse/presentations/screens/router/router_wifi_screen.dart';
+import 'package:pulse/services/net/router/verification.dart';
 import 'package:pulse/providers/database_provider.dart';
 import 'package:pulse/providers/router_manage_provider.dart';
 import 'package:pulse/providers/router_provider.dart';
@@ -43,6 +46,15 @@ class _Signed extends RouterManager {
   @override
   Future<RouterManaged?> build() async => const RouterManaged(
     features: {RouterFeature.overview, RouterFeature.clients, RouterFeature.wifi, RouterFeature.reboot},
+    actions: {
+      RouterActions.wifiToggle,
+      RouterActions.wifiEdit,
+      RouterActions.guestToggle,
+      RouterActions.guestEdit,
+      RouterActions.iotToggle,
+      RouterActions.iotEdit,
+      RouterActions.reboot,
+    },
     overview: RouterOverview(
       model: 'Archer AX53',
       hardwareVersion: 'Archer AX53 v1.0',
@@ -53,6 +65,8 @@ class _Signed extends RouterManager {
       cpu: .23,
       memory: .57,
       dhcpServer: true,
+      internet: true,
+      wanType: 'static',
     ),
     clients: [
       RouterClient(
@@ -69,13 +83,59 @@ class _Signed extends RouterManager {
         name: 'Galaxy-Tab-A9',
         link: ClientLink.wifi5g,
         signal: -52,
+        online: Duration(hours: 2, minutes: 40),
+        trafficBytes: 1834000000,
+        kind: 'tablet',
+        downBps: 1.6e6,
+        upBps: 2e5,
+      ),
+      RouterClient(
+        mac: 'AA:BB:CC:00:00:04',
+        ip: '192.168.0.52',
+        name: 'Visitor-Phone',
+        link: ClientLink.wifi2g,
+        guest: true,
+        signal: -71,
+        kind: 'phone',
       ),
       RouterClient(mac: 'AA:BB:CC:00:00:03', ip: '192.168.0.40', link: ClientLink.wifi2g),
     ],
     wifi: [
-      WifiNetwork(id: 'wireless_2g', band: WifiBand.b24, guest: false, enabled: true, ssid: 'Office Wi-Fi'),
-      WifiNetwork(id: 'wireless_5g', band: WifiBand.b5, guest: false, enabled: true, ssid: 'Office Wi-Fi'),
-      WifiNetwork(id: 'guest_2g', band: WifiBand.b24, guest: true, enabled: false, ssid: 'Guest'),
+      WifiNetwork(
+        id: 'wireless_2g',
+        band: WifiBand.b24,
+        enabled: true,
+        ssid: 'Office Wi-Fi',
+        password: 'correct-horse-battery',
+        security: 'psk_sae',
+        channel: 9,
+      ),
+      WifiNetwork(
+        id: 'wireless_5g',
+        band: WifiBand.b5,
+        enabled: true,
+        ssid: 'Office Wi-Fi',
+        password: 'correct-horse-battery',
+        security: 'psk_sae',
+        channel: 149,
+      ),
+      WifiNetwork(
+        id: 'guest_2g',
+        band: WifiBand.b24,
+        kind: WifiKind.guest,
+        enabled: false,
+        ssid: 'Guest',
+        security: 'none',
+      ),
+      WifiNetwork(
+        id: 'iot_2g',
+        band: WifiBand.b24,
+        kind: WifiKind.iot,
+        enabled: false,
+        ssid: 'Office_IoT_2.4G',
+        password: 'iotpass12',
+        security: 'psk',
+      ),
     ],
   );
 }
@@ -158,23 +218,47 @@ void main() {
     expect(failures, isEmpty);
   });
 
-  testWidgets('router signed in (native TP-Link screens)', (tester) async {
-    final c = (await tester.runAsync(() => container(profile: _profile)))!;
-    final signed = ProviderContainer(parent: c, overrides: [routerManageProvider.overrideWith(_Signed.new)]);
-    await tester.runAsync(() => signed.read(routerProfileProvider.future));
-    await tester.runAsync(() => signed.read(routerManageProvider.future));
-    final failures = await renderMatrix(
-      tester,
+  const id = RouterIdentity(driver: 'luci-encrypted-web', model: 'Archer AX53', firmware: '1.7.1');
+
+  for (final (name, screen, location, devices) in [
+    (
       'router_signed',
-      signed,
-      const RouterScreen(),
-      location: '/router',
-      devices: const {'phone_tall': Size(390, 2600), 'tablet': kTablet},
-    );
-    await tester.pumpWidget(const SizedBox());
-    signed.dispose();
-    c.dispose();
-    await tester.pump(const Duration(seconds: 1));
-    expect(failures, isEmpty);
-  });
+      const RouterScreen() as Widget,
+      '/router',
+      const {
+        'phone_tall': Size(390, 2400),
+        'phone_small': Size(360, 2400),
+        'tablet': kTablet,
+        'desktop': Size(1440, 1100),
+      },
+    ),
+    ('router_devices', const RouterDevicesScreen(), '/router/devices', const {'phone': kPhone, 'tablet': kTablet}),
+    ('router_wifi', const RouterWifiScreen(), '/router/wifi', const {'phone_tall': Size(390, 1900), 'tablet': kTablet}),
+  ]) {
+    testWidgets('signed in: $name', (tester) async {
+      final c = (await tester.runAsync(() => container(profile: _profile)))!;
+      final signed = ProviderContainer(
+        parent: c,
+        overrides: [
+          routerManageProvider.overrideWith(_Signed.new),
+          routerCapabilitiesProvider.overrideWith(
+            (ref) async => const RouterCapabilities(
+              identity: id,
+              remote: {RouterActions.wifiToggle: ActionTrust.verified, RouterActions.reboot: ActionTrust.verified},
+              fresh: true,
+            ),
+          ),
+        ],
+      );
+      await tester.runAsync(() => signed.read(routerProfileProvider.future));
+      await tester.runAsync(() => signed.read(routerManageProvider.future));
+      await tester.runAsync(() => signed.read(routerCapabilitiesProvider.future));
+      final failures = await renderMatrix(tester, name, signed, screen, location: location, devices: devices);
+      await tester.pumpWidget(const SizedBox());
+      signed.dispose();
+      c.dispose();
+      await tester.pump(const Duration(seconds: 1));
+      expect(failures, isEmpty);
+    });
+  }
 }

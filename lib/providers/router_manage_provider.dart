@@ -5,7 +5,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../services/net/router/drivers/driver_registry.dart';
 import '../services/net/router/drivers/router_driver.dart';
+import '../services/net/router/verification.dart';
 import 'router_provider.dart';
+import 'settings_provider.dart' show sharedPreferencesProvider;
 
 /// The driver that can sign in to the router on this network, found by
 /// probing it (see kRouterDrivers). Null when Pulse can't manage it natively.
@@ -14,11 +16,40 @@ final routerDriverTypeProvider = FutureProvider<RouterDriverType?>((ref) async {
   return p == null ? null : detectRouterDriver(p);
 });
 
+final routerVerificationProvider = Provider<RouterVerification>(
+  (ref) => RouterVerification(ref.watch(sharedPreferencesProvider)),
+);
+
+/// The signed-in router's driver + model + firmware, once its overview is read.
+final routerIdentityProvider = Provider.autoDispose<RouterIdentity?>((ref) {
+  final type = ref.watch(routerDriverTypeProvider).value;
+  final o = ref.watch(
+    routerManageProvider.select((m) {
+      final o = m.value?.overview;
+      return o == null ? null : (o.model, o.hardwareVersion, o.firmware);
+    }),
+  );
+  if (type == null || o == null) return null;
+  final (model, hardware, firmware) = o;
+  if (model == null || firmware == null) return null;
+  return RouterIdentity(driver: type.id, model: model, hardware: hardware ?? '', firmware: firmware);
+});
+
+/// Which of the driver's actions are verified, "Try it" or hidden for this
+/// router model + firmware. Without an identity (model or firmware unknown)
+/// every action is "Try it" and answers can't be shared.
+final routerCapabilitiesProvider = FutureProvider.autoDispose<RouterCapabilities?>((ref) async {
+  final id = ref.watch(routerIdentityProvider);
+  if (id == null) return null;
+  return ref.watch(routerVerificationProvider).load(id);
+});
+
 /// Everything a signed-in driver read from the router.
 @immutable
 class RouterManaged {
   const RouterManaged({
     required this.features,
+    this.actions = const {},
     this.overview,
     this.clients = const [],
     this.wifi = const [],
@@ -27,6 +58,9 @@ class RouterManaged {
   });
 
   final Set<RouterFeature> features;
+
+  /// The [RouterActions] the driver implements.
+  final Set<String> actions;
   final RouterOverview? overview;
   final List<RouterClient> clients;
   final List<WifiNetwork> wifi;
@@ -41,6 +75,7 @@ class RouterManaged {
     DateTime? at,
   }) => RouterManaged(
     features: features,
+    actions: actions,
     overview: overview ?? this.overview,
     clients: clients ?? this.clients,
     wifi: wifi ?? this.wifi,
@@ -97,6 +132,7 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     ]);
     return RouterManaged(
       features: d.features,
+      actions: d.actions,
       overview: r[0] as RouterOverview?,
       clients: (r[1] as List<RouterClient>?) ?? const [],
       wifi: (r[2] as List<WifiNetwork>?) ?? const [],
@@ -122,16 +158,25 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     state = await AsyncValue.guard(() => _loadAll(d));
   }
 
-  /// Applies a Wi-Fi change, then re-reads the networks.
-  Future<void> setWifi(WifiNetwork n, {bool? enabled, String? ssid, String? password}) async {
+  /// Applies a Wi-Fi change, then reads the network back from the router.
+  /// Returns whether the router now reports what was asked (null when the
+  /// read-back failed, e.g. this device was on the network just turned off).
+  Future<bool?> setWifi(WifiNetwork n, {bool? enabled, String? ssid, String? password}) async {
     final d = _driver, cur = state.value;
-    if (d == null || cur == null) return;
+    if (d == null || cur == null) throw const RouterDriverException(RouterErrorKind.unexpected, 'not signed in');
     await d.setWifi(n, enabled: enabled, ssid: ssid, password: password);
+    // Radios restart after a change; give the router a moment.
+    await Future<void>.delayed(const Duration(seconds: 2));
     try {
       final w = await d.wifi();
       state = AsyncData((state.value ?? cur).copyWith(wifi: w));
+      final now = w.where((x) => x.id == n.id).firstOrNull;
+      if (now == null) return false;
+      return (enabled == null || now.enabled == enabled) &&
+          (ssid == null || now.ssid == ssid) &&
+          (password == null || now.password == null || now.password == password);
     } on Object {
-      // The change went through; the list refreshes next time.
+      return null;
     }
   }
 

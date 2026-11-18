@@ -44,7 +44,17 @@ class TplinkDriver implements RouterDriver {
   TplinkSession? _session;
   RouterCredential? _login;
 
-  static const _wifiForms = ['wireless_2g', 'wireless_5g', 'wireless_6g', 'guest_2g', 'guest_5g', 'guest_6g'];
+  static const _wifiForms = [
+    'wireless_2g',
+    'wireless_5g',
+    'wireless_6g',
+    'guest_2g',
+    'guest_5g',
+    'guest_6g',
+    'iot_2g',
+    'iot_5g',
+    'iot_6g',
+  ];
 
   @override
   Set<RouterFeature> get features => const {
@@ -55,6 +65,17 @@ class TplinkDriver implements RouterDriver {
     RouterFeature.reboot,
     RouterFeature.portForwards,
     RouterFeature.dhcpLeases,
+  };
+
+  @override
+  Set<String> get actions => const {
+    RouterActions.wifiToggle,
+    RouterActions.wifiEdit,
+    RouterActions.guestToggle,
+    RouterActions.guestEdit,
+    RouterActions.iotToggle,
+    RouterActions.iotEdit,
+    RouterActions.reboot,
   };
 
   /// Whether the router at [host] speaks this protocol (no credentials sent).
@@ -414,6 +435,14 @@ class TplinkDriver implements RouterDriver {
         // optional
       }
     }
+    bool? internet;
+    try {
+      final i = await _read('admin/status?form=internet');
+      final st = '${i['internet_status'] ?? i['wan_internet_status'] ?? ''}'.toLowerCase();
+      if (st.isNotEmpty) internet = st == 'connected';
+    } on RouterDriverException {
+      // optional
+    }
     final up = int.tryParse('${s['wan_ipv4_uptime'] ?? ''}');
     final v6 = _s('${s['wan_ipv6_ip6addr'] ?? ''}'.split('/').first);
     return RouterOverview(
@@ -423,7 +452,8 @@ class TplinkDriver implements RouterDriver {
       wanIp: _s(s['wan_ipv4_ipaddr']),
       wanGateway: _s(s['wan_ipv4_gateway']),
       // Some firmware reports a numeric code here instead of dhcp/pppoe/…; skip it.
-      wanType: int.tryParse('${s['conn_type'] ?? ''}') == null ? _s(s['conn_type']) : null,
+      wanType:
+          _s(s['wan_ipv4_conntype']) ?? (int.tryParse('${s['conn_type'] ?? ''}') == null ? _s(s['conn_type']) : null),
       wanUptime: up == null ? null : Duration(seconds: up),
       lanIp: _s(s['lan_ipv4_ipaddr']),
       wanMac: _s(s['wan_macaddr']),
@@ -432,6 +462,7 @@ class TplinkDriver implements RouterDriver {
       memory: mem,
       dhcpServer: _bool(s['lan_ipv4_dhcp_enable']),
       ipv6: v6 == '::' ? null : v6,
+      internet: internet,
     );
   }
 
@@ -482,7 +513,7 @@ class TplinkDriver implements RouterDriver {
           return d == null ? null : d * 8; // bytes/s → bits/s
         }
 
-        final online = int.tryParse('${r['onlineTime'] ?? r['online_time'] ?? ''}');
+        final online = double.tryParse('${r['onlineTime'] ?? r['online_time'] ?? ''}')?.round();
         out[mac] = RouterClient(
           mac: mac,
           ip: c.ip,
@@ -494,6 +525,7 @@ class TplinkDriver implements RouterDriver {
           signal: int.tryParse('${r['signal'] ?? ''}'),
           online: online == null ? null : Duration(seconds: online),
           trafficBytes: int.tryParse('${r['trafficUsage'] ?? r['trafficUsed'] ?? ''}'),
+          kind: _s(r['deviceType'])?.toLowerCase(),
         );
       }
     } on RouterDriverException {
@@ -525,13 +557,17 @@ class TplinkDriver implements RouterDriver {
         WifiNetwork(
           id: form,
           band: band,
-          guest: form.startsWith('guest'),
+          kind: form.startsWith('guest')
+              ? WifiKind.guest
+              : form.startsWith('iot')
+              ? WifiKind.iot
+              : WifiKind.main,
           enabled: _bool(v('enable')),
           ssid: _s(v('ssid')),
           password: _s(v('psk_key')),
           hidden: _bool(v('hidden')),
           security: _s(v('encryption')),
-          channel: int.tryParse('${v('channel') ?? ''}'),
+          channel: int.tryParse('${v('current_channel') ?? ''}') ?? int.tryParse('${v('channel') ?? ''}'),
         ),
       );
     }
