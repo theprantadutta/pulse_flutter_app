@@ -3,3 +3,5 @@ tags:
     # Writes PNG renders of screens to build/renders for visual review.
   network:
     # Talks to the real network stack.
+  store:
+    # Renders the Play Store screen captures (build/store), run on demand.

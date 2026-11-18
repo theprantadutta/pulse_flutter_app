@@ -47,13 +47,20 @@ class ToolsHubScreen extends ConsumerWidget {
           final pad = context.pagePadding;
           const gap = 12.0;
           // Two columns make a narrower card: room for a third line and two chip rows.
-          final cardHeight = columns == 4 ? 176.0 : 220.0;
+          var cardHeight = columns == 4 ? 176.0 : 220.0;
           // Tablets fill the height with the grid plus the Router card;
           // phones use 138 dp tiles and scroll.
           // The page leaves the bottom system inset (gesture bar) to us.
           final inset = MediaQuery.paddingOf(context).bottom;
-          final available = box.maxHeight - 4 - pad - inset - cardHeight - gap;
-          final tileHeight = compact ? 138.0 : ((available - gap * (rows - 1)) / rows).clamp(150.0, 320.0);
+          double tileFor(double card) => (box.maxHeight - 4 - pad - inset - card - gap - gap * (rows - 1)) / rows;
+          // Short screens (a landscape 8" tablet): the card drops its chips
+          // so the tiles keep a usable height.
+          var chips = true;
+          if (!compact && tileFor(cardHeight) < 150) {
+            cardHeight = columns == 4 ? 124.0 : 168.0;
+            chips = false;
+          }
+          final tileHeight = compact ? 138.0 : tileFor(cardHeight).clamp(150.0, 320.0);
           return CustomScrollView(
             slivers: [
               SliverPadding(
@@ -90,7 +97,7 @@ class ToolsHubScreen extends ConsumerWidget {
                         ? const RouterToolCard()
                         : SizedBox(
                             height: cardHeight,
-                            child: RouterToolCard(large: true, lines: columns == 4 ? 2 : 3),
+                            child: RouterToolCard(large: true, lines: columns == 4 ? 2 : 3, chips: chips),
                           ),
                   ),
                 ),
@@ -106,8 +113,11 @@ class ToolsHubScreen extends ConsumerWidget {
 /// The Tools hub's wide Router card: what Pulse can do with the router, and
 /// the router on this network once detected.
 class RouterToolCard extends ConsumerWidget {
-  const RouterToolCard({super.key, this.large = false, this.lines = 2});
+  const RouterToolCard({super.key, this.large = false, this.lines = 2, this.chips = true});
   final bool large;
+
+  /// Feature chips under the description (left out when height is short).
+  final bool chips;
 
   /// Description lines on the large (tablet) card.
   final int lines;
@@ -163,8 +173,7 @@ class RouterToolCard extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       style: context.type.bodySmall!.copyWith(fontSize: 15, color: c.onSurfaceVariant),
                     ),
-                    const Spacer(),
-                    pills,
+                    if (chips) ...[const Spacer(), pills],
                   ],
                 ),
               ),

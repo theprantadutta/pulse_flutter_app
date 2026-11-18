@@ -30,12 +30,15 @@ Future<void> renderToPng(
   Widget child, {
   Size size = const Size(1280, 800),
   double pixelRatio = 1,
+  Future<void> Function()? before,
 }) async {
   tester.view.physicalSize = size * pixelRatio;
   tester.view.devicePixelRatio = pixelRatio;
   final key = GlobalKey();
   await tester.pumpWidget(RepaintBoundary(key: key, child: child));
   await tester.pump(const Duration(milliseconds: 300));
+  // e.g. scroll to the part to capture.
+  await before?.call();
   await tester.runAsync(() async {
     final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
     final image = await boundary.toImage(pixelRatio: pixelRatio);
@@ -59,6 +62,7 @@ Widget pulseTestApp(
   String location = '/ping',
   bool shell = true,
   double textScale = 1,
+  EdgeInsets? padding,
 }) => UncontrolledProviderScope(
   container: container,
   child: MaterialApp(
@@ -67,7 +71,7 @@ Widget pulseTestApp(
     home: MediaQuery(
       data: MediaQueryData(
         size: size,
-        padding: size.shortestSide < 600 ? const EdgeInsets.only(top: 40, bottom: 20) : EdgeInsets.zero,
+        padding: padding ?? (size.shortestSide < 600 ? const EdgeInsets.only(top: 40, bottom: 20) : EdgeInsets.zero),
         // Freeze ambient loops so renders are deterministic.
         disableAnimations: true,
         textScaler: TextScaler.linear(textScale),
