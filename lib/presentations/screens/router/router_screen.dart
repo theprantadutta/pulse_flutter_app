@@ -637,25 +637,41 @@ class _SignInError extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final e = error;
+    final kind = e is RouterDriverException ? e.kind : null;
+    // Retrying with the same password can't fix a wrong one: ask for it again.
+    void askAgain() =>
+        editRouterLogin(context, ref, profile, cred == null ? null : RouterCredential(cred!.username, ''));
+    final wrong = kind == RouterErrorKind.wrongPassword;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PulseErrorBanner(
-          title: "Couldn't sign in to the router",
-          message: e is RouterDriverException ? e.message : '$e',
-          onRetry: () => ref.invalidate(routerManageProvider),
+          title: switch (kind) {
+            RouterErrorKind.wrongPassword => 'Wrong password',
+            RouterErrorKind.lockedOut => 'Sign-in locked for now',
+            RouterErrorKind.busy => 'Someone else is signed in',
+            _ => "Couldn't sign in to the router",
+          },
+          message: wrong
+              ? "The router didn't accept that password. Enter it again; it's usually the one you use on the "
+                    "router's own page, not the Wi-Fi password."
+              : (e is RouterDriverException ? e.message : '$e'),
+          retryLabel: wrong ? 'Enter again' : 'Retry',
+          onRetry: wrong ? askAgain : () => ref.invalidate(routerManageProvider),
         ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: PulseButton(
-            label: 'Change login',
-            icon: PulseIcons.edit,
-            style: PulseButtonStyle.tonal,
-            size: PulseButtonSize.small,
-            onPressed: () => editRouterLogin(context, ref, profile, cred),
+        if (!wrong) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: PulseButton(
+              label: 'Change password',
+              icon: PulseIcons.edit,
+              style: PulseButtonStyle.tonal,
+              size: PulseButtonSize.small,
+              onPressed: askAgain,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -1144,6 +1160,7 @@ Future<void> editRouterLogin(BuildContext context, WidgetRef ref, RouterProfile 
         final muted = context.type.bodySmall!.copyWith(color: context.colors.onSurfaceVariant);
         return AlertDialog(
           title: const Text('Router login'),
+          scrollable: true,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1196,6 +1213,9 @@ Future<void> editRouterLogin(BuildContext context, WidgetRef ref, RouterProfile 
       ref.read(sessionRouterLoginProvider.notifier).put(p.id, login);
     }
     ref.invalidate(routerCredentialProvider);
+    // Sign in again even when the same password was entered (it may have
+    // failed for another reason the first time).
+    ref.invalidate(routerManageProvider);
     if (context.mounted) {
       showPulseToast(
         context,

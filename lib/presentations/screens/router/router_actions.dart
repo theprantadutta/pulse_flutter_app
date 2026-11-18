@@ -36,6 +36,7 @@ Future<void> runRouterAction(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(confirmTitle ?? RouterActions.label(action)),
+        scrollable: true,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,6 +298,7 @@ Future<void> restartRouter(BuildContext context, WidgetRef ref, {required String
     context: context,
     builder: (context) => AlertDialog(
       title: Text('Restart $name?'),
+      scrollable: true,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

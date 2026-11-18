@@ -94,7 +94,14 @@ class RouterManaged {
 /// router's status, devices, Wi-Fi and rules, refreshes devices every 15 s,
 /// and signs out when the screen closes (routers often allow one admin).
 /// Null when there is no driver for this router or no saved login.
-final routerManageProvider = AsyncNotifierProvider.autoDispose<RouterManager, RouterManaged?>(RouterManager.new);
+///
+/// Never retried automatically: Riverpod would otherwise repeat a failed
+/// sign-in (a wrong password) with backoff, and routers lock the admin out
+/// after a few failures. The person retries or enters the password again.
+final routerManageProvider = AsyncNotifierProvider.autoDispose<RouterManager, RouterManaged?>(
+  RouterManager.new,
+  retry: (_, _) => null,
+);
 
 class RouterManager extends AsyncNotifier<RouterManaged?> {
   RouterDriver? _driver;

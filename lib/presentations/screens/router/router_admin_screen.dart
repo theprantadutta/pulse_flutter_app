@@ -144,6 +144,7 @@ class _AdminWebViewState extends ConsumerState<_AdminWebView> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: Text('Sign in to ${request.host}'),
+          scrollable: true,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

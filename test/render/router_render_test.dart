@@ -3,6 +3,7 @@ library;
 
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:pulse/data/db/app_database.dart';
@@ -164,6 +165,12 @@ class _Signed extends RouterManager {
   );
 }
 
+class _WrongPassword extends RouterManager {
+  @override
+  Future<RouterManaged?> build() async =>
+      throw const RouterDriverException(RouterErrorKind.wrongPassword, 'login failed');
+}
+
 void main() {
   setUpAll(loadPulseFonts);
 
@@ -218,6 +225,61 @@ void main() {
     c.dispose();
     await tester.pump(const Duration(seconds: 1));
     expect(failures, isEmpty);
+  });
+
+  testWidgets('login dialog fits a phone with the keyboard up', (tester) async {
+    final c = (await tester.runAsync(() => container(profile: _profile, login: false)))!;
+    await tester.runAsync(() => c.read(routerProfileProvider.future));
+    await tester.runAsync(() => c.read(routerDriverTypeProvider.future));
+    // A24 width with about half the height taken by the keyboard.
+    const size = Size(390, 470);
+    await renderToPng(
+      tester,
+      'router_login_keyboard',
+      pulseTestApp(c, const RouterScreen(), size: size, location: '/router'),
+      size: size,
+    );
+    FlutterSecureStorage.setMockInitialValues({});
+    await tester.ensureVisible(find.text('Sign in to router'));
+    await tester.pump();
+    await tester.tap(find.text('Sign in to router'));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.takeException(), isNull);
+    expect(find.text('Remember on this device'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    c.dispose();
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('wrong password: "Enter again" reopens the password form', (tester) async {
+    final c = (await tester.runAsync(() => container(profile: _profile)))!;
+    final failed = ProviderContainer(parent: c, overrides: [routerManageProvider.overrideWith(_WrongPassword.new)]);
+    await tester.runAsync(() => failed.read(routerProfileProvider.future));
+    await tester.runAsync(() => failed.read(routerDriverTypeProvider.future));
+    await tester.runAsync(() => failed.read(routerCredentialProvider.future));
+    final sub = failed.listen(routerManageProvider, (_, _) {});
+    await tester.runAsync(() => failed.read(routerManageProvider.future).then<void>((_) {}, onError: (_) {}));
+    FlutterSecureStorage.setMockInitialValues({});
+    await renderToPng(
+      tester,
+      'router_wrong_password',
+      pulseTestApp(failed, const RouterScreen(), size: kPhone, location: '/router'),
+      size: kPhone,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Wrong password'), findsOneWidget);
+    await tester.ensureVisible(find.text('Enter again'));
+    await tester.tap(find.text('Enter again'));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Remember on this device'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    sub.close();
+    failed.dispose();
+    c.dispose();
+    await tester.pump(const Duration(seconds: 1));
   });
 
   testWidgets('router without UPnP, no login', (tester) async {
