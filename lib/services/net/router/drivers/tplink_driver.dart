@@ -5,7 +5,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, visibleForTesting;
 import 'package:pointycastle/export.dart';
 
 import '../router_probe.dart';
@@ -288,13 +288,22 @@ class TplinkDriver implements RouterDriver {
   Never _loginError(Map<String, dynamic> j) {
     final data = j['data'] is Map ? j['data'] as Map : const {};
     final code = '${j['errorcode'] ?? data['errorcode'] ?? ''}'.toLowerCase();
+    // Debug builds log what the router said (never the password) so sign-in
+    // problems on a device can be diagnosed from logcat.
+    if (kDebugMode) {
+      debugPrint(
+        '[router] sign-in refused: errorcode=${j['errorcode']} data.errorcode=${data['errorcode']} '
+        'failureCount=${data['failureCount']} attemptsAllowed=${data['attemptsAllowed']} '
+        'plain=$_plain sg=$_sg encrypted=$_encrypted base=$_base',
+      );
+    }
     final left = int.tryParse('${data['attemptsAllowed'] ?? ''}');
     // "user conflict": someone else is signed in; "multiple login": the same.
     if (code.contains('conflict') || code.contains('multiple')) {
       throw const RouterDriverException(RouterErrorKind.busy);
     }
     if (left == 0 || code.contains('exceed') || code.contains('lock')) {
-      throw const RouterDriverException(RouterErrorKind.lockedOut);
+      throw RouterDriverException(RouterErrorKind.lockedOut, '${data['failureCount'] ?? ''}');
     }
     if (code.contains('login') || code.contains('password') || left != null) {
       throw RouterDriverException(

@@ -59,7 +59,10 @@ class RouterDriverException implements Exception {
 
   String get message => switch (kind) {
     RouterErrorKind.wrongPassword => 'The router said the password is wrong.',
-    RouterErrorKind.lockedOut => 'The router locked sign-in after failed attempts. Wait a few minutes and try again.',
+    RouterErrorKind.lockedOut =>
+      'The router stopped accepting passwords from Pulse on this device after '
+          '${detail == null || detail!.isEmpty ? 'too many' : detail} failed attempts. It lifts this by itself, often '
+          'within two hours; trying earlier does not help. Then enter the password again.',
     RouterErrorKind.busy =>
       "The router is signed in on another device (maybe its page in a browser) and allows one at a time.",
     RouterErrorKind.unsupported => "Pulse can't sign in to this router model yet.",

@@ -658,7 +658,12 @@ class _SignInError extends ConsumerWidget {
                     "router's own page, not the Wi-Fi password."
               : (e is RouterDriverException ? e.message : '$e'),
           retryLabel: wrong ? 'Enter again' : 'Retry',
-          onRetry: wrong ? askAgain : () => ref.invalidate(routerManageProvider),
+          // While locked, every attempt is refused (and may count): no Retry.
+          onRetry: kind == RouterErrorKind.lockedOut
+              ? null
+              : wrong
+              ? askAgain
+              : () => ref.invalidate(routerManageProvider),
         ),
         if (!wrong) ...[
           const SizedBox(height: 8),
