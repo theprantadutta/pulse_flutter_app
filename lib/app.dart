@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'core/theme/pulse_theme.dart';
+import 'core/widgets/pulse/pulse_tablet_scale.dart';
 import 'presentations/navigation/app_router.dart';
 import 'providers/settings_provider.dart';
 
@@ -31,7 +32,7 @@ class PulseApp extends ConsumerWidget {
           // Any dependency still built against package:flutter/material.dart
           // reads a different Theme InheritedWidget; the bridge forwards ours.
           // ignore: deprecated_member_use
-          return MaterialUiCompatibilityBridge(child: app);
+          return MaterialUiCompatibilityBridge(child: PulseTabletScale(child: app));
         },
       ),
     );

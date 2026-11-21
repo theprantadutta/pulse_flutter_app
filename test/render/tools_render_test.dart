@@ -59,7 +59,13 @@ void main() {
       const ToolsHubScreen(),
       location: '/tools',
       // tab_portrait: Galaxy Tab A9 portrait, where nine tools make five short rows.
-      devices: const {'phone': kPhone, 'tablet': kTablet, 'tab_portrait': Size(601, 1005)},
+      devices: const {
+        'phone': kPhone,
+        'tablet': kTablet,
+        'tab_portrait': Size(601, 1005),
+        'ipad13': kIpad13,
+        'ipad13l': kIpad13Landscape,
+      },
     );
     await tester.pumpWidget(const SizedBox());
     c.dispose();

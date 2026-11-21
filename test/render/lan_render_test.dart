@@ -142,7 +142,12 @@ void main() {
     WidgetTester tester,
     String name,
     LanScanState s, {
-    Map<String, Size> devices = const {'phone': kPhone, 'tablet': kTablet},
+    Map<String, Size> devices = const {
+      'phone': kPhone,
+      'tablet': kTablet,
+      'ipad13': kIpad13,
+      'ipad13l': kIpad13Landscape,
+    },
   }) async {
     final c = (await tester.runAsync(() => seed(s)))!;
     final failures = await renderMatrix(tester, name, c, const LanScreen(), location: '/lan', devices: devices);

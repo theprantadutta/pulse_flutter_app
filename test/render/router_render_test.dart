@@ -346,9 +346,16 @@ void main() {
         'phone_small': Size(360, 2400),
         'tablet': kTablet,
         'desktop': Size(1440, 1100),
+        'ipad13': kIpad13,
+        'ipad13l': kIpad13Landscape,
       },
     ),
-    ('router_devices', const RouterDevicesScreen(), '/router/devices', const {'phone': kPhone, 'tablet': kTablet}),
+    (
+      'router_devices',
+      const RouterDevicesScreen(),
+      '/router/devices',
+      const {'phone': kPhone, 'tablet': kTablet, 'ipad13': kIpad13, 'ipad13l': kIpad13Landscape},
+    ),
     ('router_wifi', const RouterWifiScreen(), '/router/wifi', const {'phone_tall': Size(390, 1900), 'tablet': kTablet}),
     (
       'router_internet',

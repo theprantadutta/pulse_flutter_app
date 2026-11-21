@@ -11,3 +11,4 @@ export 'pulse_feedback.dart';
 export 'pulse_icons.dart';
 export 'pulse_layout.dart';
 export 'pulse_page.dart';
+export 'pulse_tablet_scale.dart';

@@ -100,7 +100,9 @@ void main() {
       c,
       const TraceScreen(),
       location: '/traceroute',
-      devices: phoneOnly ? const {'phone': kPhone} : const {'phone': kPhone, 'tablet': kTablet},
+      devices: phoneOnly
+          ? const {'phone': kPhone}
+          : const {'phone': kPhone, 'tablet': kTablet, 'ipad13': kIpad13, 'ipad13l': kIpad13Landscape},
     );
     await tester.pumpWidget(const SizedBox());
     c.dispose();

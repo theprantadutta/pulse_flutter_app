@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -274,7 +276,10 @@ class _TabletHome extends ConsumerWidget {
           final width = box.maxWidth - pad * 2;
           final cols = width >= 900 ? 3 : (width >= 520 ? 2 : 1);
           final available = box.maxHeight - pad;
-          final tile = ((available - gap) / 2).clamp(250.0, 400.0);
+          // Two rows fill a landscape tablet. In portrait that made tall,
+          // mostly empty cards, so a card is never taller than it is wide.
+          final cell = (width - gap * (cols - 1)) / cols;
+          final tile = math.min(((available - gap) / 2).clamp(250.0, 400.0), math.max(250.0, cell));
           return GridView.builder(
             padding: EdgeInsets.fromLTRB(pad, 0, pad, pad),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

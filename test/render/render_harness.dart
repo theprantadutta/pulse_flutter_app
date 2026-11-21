@@ -52,6 +52,12 @@ Future<void> renderToPng(
 const kPhone = Size(390, 844);
 const kTablet = Size(1280, 800);
 
+/// iPads as the layout sees them. A 13" iPad (1024x1366 pt) is scaled by
+/// [PulseTabletScale] to a 800 dp short side; an 11" iPad (834x1194) is not.
+const kIpad13 = Size(800, 1067);
+const kIpad13Landscape = Size(1067, 800);
+const kIpad11 = Size(834, 1194);
+
 /// [child] inside the real app frame ([PulseShell] at [location]) with the
 /// Expressive theme, at [size], with phone-like safe-area insets.
 Widget pulseTestApp(
@@ -89,7 +95,13 @@ Future<List<String>> renderMatrix(
   ProviderContainer container,
   Widget child, {
   String location = '/ping',
-  Map<String, Size> devices = const {'phone': kPhone, 'tablet': kTablet},
+  Map<String, Size> devices = const {
+    'phone': kPhone,
+    'tablet': kTablet,
+    'ipad13': kIpad13,
+    'ipad13l': kIpad13Landscape,
+    'ipad11': kIpad11,
+  },
 }) async {
   final failures = <String>[];
   for (final d in devices.entries) {
