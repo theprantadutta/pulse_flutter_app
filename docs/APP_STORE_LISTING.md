@@ -89,9 +89,15 @@ Pulse is now on iPhone and iPad: nine network tools, your router, and Home Scree
 
 ## Screenshots
 
-Raw captures in `app-store-screenshots/iphone/` (iPhone 17 Pro Max, 1320×2868, 6.9") and
-`app-store-screenshots/ipad/` (iPad Pro 13-inch M5, 2064×2752, 13") from the simulator with live data; the
-marketing versions are made from these.
+Raw captures (live data on the office network, status bar overridden to 9:41) for the marketing versions:
+
+- `app-store-screenshots/iphone/` — iPhone 17 Pro Max (iOS 26.5), 1320×2868 (6.9"), 11 shots: ping, traceroute,
+  speed (live + result), LAN scan, router, router devices, port scan, Geo IP, monitor, tools.
+- `app-store-screenshots/ipad/` — iPad Air 13-inch M4 (iOS 26.5), 2048×2732 (13"), 9 shots: ping board, traceroute,
+  speed (live + result), router, router devices, LAN scan, Geo IP, tools. (The iPad Pro 13" iOS 27 simulator's
+  system UI wouldn't render, so the iPad Air was used; 2048×2732 is an accepted 13" size.)
+
+Avoided: own public IP / location (Geo IP shows github.com), the router's WAN IP is masked by the app.
 
 ## App Privacy (nutrition label)
 
