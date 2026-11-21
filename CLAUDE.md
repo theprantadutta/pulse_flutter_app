@@ -141,8 +141,8 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   `Add-AppxPackage` (the Appx module does not load in PowerShell 7). Never trust msix's bundled test_certificate.pfx —
   its private key is public.
 - iOS/macOS were not built on this machine (Windows). On a Mac: `flutter build ios` / `macos`; iOS needs the
-  "Access Wi-Fi Information" capability enabled in Xcode for the SSID. `ios/Podfile` already defines the
-  permission_handler macros. macOS runs un-sandboxed (system tools) — see `macos/Runner/*.entitlements`.
+  "Access Wi-Fi Information" capability enabled in Xcode for the SSID. iOS uses Swift Package Manager only (no
+  CocoaPods, Nov 2026); permission_handler's SPM manifest enables permissions from the Info.plist usage keys. macOS runs un-sandboxed (system tools) — see `macos/Runner/*.entitlements`.
 
 ## Microsoft Store (Windows MSIX)
 - Packaging: `dart run msix:create` (config in `pubspec.yaml` › `msix_config`). Output: `build/windows/x64/runner/Release/pulse.msix`.

@@ -69,11 +69,19 @@ final class PulseNetworkInfo: NSObject {
   }
 
   static func dnsServers() -> [String] {
-    var state = __res_9_state()
-    guard res_9_ninit(&state) == 0 else { return [] }
-    defer { res_9_ndestroy(&state) }
+    // `__res_9_state` names both the struct and a C function returning `_res`,
+    // and Swift resolves it to the function, so reach the struct through the
+    // `res_9_state` pointer typedef.
+    let state = res_9_state.allocate(capacity: 1)
+    state.initialize(to: res_9_state.Pointee())
+    defer {
+      state.deinitialize(count: 1)
+      state.deallocate()
+    }
+    guard res_9_ninit(state) == 0 else { return [] }
+    defer { res_9_ndestroy(state) }
     var servers = [res_9_sockaddr_union](repeating: res_9_sockaddr_union(), count: 8)
-    let count = Int(res_9_getservers(&state, &servers, Int32(servers.count)))
+    let count = Int(res_9_getservers(state, &servers, Int32(servers.count)))
     var out: [String] = []
     for i in 0..<max(0, count) {
       let server = servers[i]
