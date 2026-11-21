@@ -25,7 +25,7 @@ abstract final class PulseShareConfig {
   static const String? appStoreUrl = null;
 
   /// The numeric App Store id (for the in-app review page on iOS / macOS).
-  static const String? appStoreId = null;
+  static const appStoreId = '6837617016';
   static const sourceUrl = 'https://github.com/theprantadutta/pulse_flutter_app';
 
   /// Donations aren't set up yet: an empty list shows "coming soon". Add

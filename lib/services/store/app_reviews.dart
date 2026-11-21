@@ -92,9 +92,8 @@ class AppReviews {
         await InAppReview.instance.openStoreListing();
         return;
       }
-      final id = PulseShareConfig.appStoreId;
-      if ((Platform.isIOS || Platform.isMacOS) && id != null) {
-        await InAppReview.instance.openStoreListing(appStoreId: id);
+      if (Platform.isIOS || Platform.isMacOS) {
+        await InAppReview.instance.openStoreListing(appStoreId: PulseShareConfig.appStoreId);
         return;
       }
     } on Object {
