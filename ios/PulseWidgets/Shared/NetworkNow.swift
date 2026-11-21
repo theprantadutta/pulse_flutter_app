@@ -38,8 +38,8 @@ struct NetworkNow {
       expensive: path?.isExpensive ?? false, constrained: path?.isConstrained ?? false)
   }
 
-  private static func currentPath() async -> NWPath? {
-    await withCheckedContinuation { (cont: CheckedContinuation<NWPath?, Never>) in
+  private static func currentPath() async -> Network.NWPath? {
+    await withCheckedContinuation { (cont: CheckedContinuation<Network.NWPath?, Never>) in
       let monitor = NWPathMonitor()
       let queue = DispatchQueue(label: "pulse.widgets.path")
       // A class box: the handlers below are @Sendable, so they can't mutate a

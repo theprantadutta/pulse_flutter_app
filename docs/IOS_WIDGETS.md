@@ -1,8 +1,11 @@
 # iOS home screen widgets — setup on a Mac
 
-**Status (Nov 2026):** all Swift code is written, but none of it has been built yet: it was written on Windows,
-where Xcode isn't available. A Mac session must add the widget extension target to the Xcode project, turn
-on the capabilities below, build, and fix any compile errors. Android uses Jetpack Glance (
+**Status (Nov 21, 2026):** the `PulseWidgets` extension target is in the Xcode project (added with the
+`xcodeproj` gem; embedded in Runner before "Thin Binary", iOS 17.0, Swift 5, bundle id
+`com.pranta.pulse.PulseWidgets`, team 9M6X7M798T) and it builds for the simulator. Fixes needed on first build:
+`@Parameter(default:)` only takes literals (the host default now comes from `PulseHostQuery.defaultResult()`), and
+`NWPath` must be written `Network.NWPath` because NetworkExtension has a legacy class of the same name. Still to do:
+the on-device testing checklist below. Android uses Jetpack Glance (
 `android/app/src/main/kotlin/com/example/pulse/widgets/`).
 
 ## What exists

@@ -71,8 +71,8 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   `RefreshPingAction`, `WidgetRefreshWorker` (WorkManager, ≥ 15 min) refreshes on each widget's interval. Settings per
   widget: `WidgetConfigActivity` (a `MainActivity` subclass) opens Flutter on `/widgets/configure?id=&kind=`, which
   saves `w.cfg.<id>` and calls `HomeWidget.finishHomeWidgetConfigure()`.
-- **iOS:** WidgetKit + App Intents in `ios/PulseWidgets/`, **not yet added to the Xcode project** — follow
-  `docs/IOS_WIDGETS.md` on a Mac (target, App Group `group.com.pranta.pulse`, entitlements, build).
+- **iOS:** WidgetKit + App Intents in `ios/PulseWidgets/`, built as the `PulseWidgets` extension target (Nov 21, 2026;
+  App Group `group.com.pranta.pulse`); see `docs/IOS_WIDGETS.md` for the setup and the on-device checklist.
 - **Dart:** `lib/services/widgets/home_widgets.dart` (`PulseWidgets`: keys, JSON shapes, monitor snapshot, per-widget
   settings, `WidgetLink` parsing), `providers/widgets_provider.dart` (publishes theme, saved targets, speed results,
   monitor while the app runs), the background monitor publishes Monitor after each cycle, `NetworkInfoNotifier`

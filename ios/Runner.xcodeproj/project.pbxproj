@@ -8,13 +8,25 @@
 
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		27222F7E8DD83D972CF83AE5 /* ToolWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C34CB9F99961517EFF5E6AA /* ToolWidgets.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		3D1745A129523BF76212110B /* NetworkNow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D97E9B3B5A061ED699DC256 /* NetworkNow.swift */; };
+		4383CB936C6B447709447232 /* PulseWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6397C3645A0AE9C6FF2EE64F /* PulseWidgetsBundle.swift */; };
+		4452A29282E377E0345542B4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16FBA4A80E9D11A2CF5FA762 /* Foundation.framework */; };
+		5BCF68AB112D34831C3B2A31 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFF6C7613C7BA8B9B85892E7 /* Components.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
+		7663523A51E8576844C6508F /* PulseWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7CDE5C87C8D0090F9E4F66AF /* PulseWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
+		7AC4C0F140A881205029DA6A /* StatusWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64C17F79CF97A24436AAA6DE /* StatusWidgets.swift */; };
+		843FEFD0ED354BEC6841CB8F /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCD851D987DD38ECA4D9D5D /* Intents.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		B9641349746F0A10F8B4A653 /* PulseTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B956BDCC037B943B453F5613 /* PulseTheme.swift */; };
+		BC06EC4AD68D7F620585C4AC /* PulsePinger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20246E755FF5546DC43D9B36 /* PulsePinger.swift */; };
+		BCF0CCF50705B6ED29DDCDF3 /* PulseShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE2F68507A8C8EB2D90EAC4B /* PulseShared.swift */; };
+		DC8E4239C74603F57872641E /* PingWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F65FA1379254F4B2F6ECB09 /* PingWidgets.swift */; };
 		EF4013C491464078D2893F5F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E4DFFEE656C6E3DE69043668 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
@@ -26,9 +38,27 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
+		C62E6FEF1628A18552830071 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5217862B3E9210D3C991DF48;
+			remoteInfo = PulseWidgets;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		9067E3E17219BF84201DD554 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7663523A51E8576844C6508F /* PulseWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9705A1C41CF9048500538489 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -44,13 +74,23 @@
 /* Begin PBXFileReference section */
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		16FBA4A80E9D11A2CF5FA762 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		1A47F61F1BFEEC5CD195FF76 /* PulseWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = PulseWidgets.entitlements; sourceTree = "<group>"; };
+		20246E755FF5546DC43D9B36 /* PulsePinger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulsePinger.swift; sourceTree = "<group>"; };
+		2D97E9B3B5A061ED699DC256 /* NetworkNow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkNow.swift; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		4C34CB9F99961517EFF5E6AA /* ToolWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToolWidgets.swift; sourceTree = "<group>"; };
+		6397C3645A0AE9C6FF2EE64F /* PulseWidgetsBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulseWidgetsBundle.swift; sourceTree = "<group>"; };
+		64C17F79CF97A24436AAA6DE /* StatusWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatusWidgets.swift; sourceTree = "<group>"; };
+		6FCD851D987DD38ECA4D9D5D /* Intents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
+		7327B3C7690DAB064CD076E1 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
+		7CDE5C87C8D0090F9E4F66AF /* PulseWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PulseWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -58,10 +98,23 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9F65FA1379254F4B2F6ECB09 /* PingWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PingWidgets.swift; sourceTree = "<group>"; };
+		B956BDCC037B943B453F5613 /* PulseTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulseTheme.swift; sourceTree = "<group>"; };
+		BE2F68507A8C8EB2D90EAC4B /* PulseShared.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulseShared.swift; sourceTree = "<group>"; };
 		E4DFFEE656C6E3DE69043668 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		EFF6C7613C7BA8B9B85892E7 /* Components.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		FB7EB3BFDBDC06DF27FE2E08 /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		01031D39C0DE969B89BE604B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4452A29282E377E0345542B4 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		97C146EB1CF9000F007C117D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -80,12 +133,49 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		06F6EEFBF445B9295C2EF2AF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DF74B107DA89D37AF7C8830D /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		331C8082294A63A400263BE5 /* RunnerTests */ = {
 			isa = PBXGroup;
 			children = (
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
 			);
 			path = RunnerTests;
+			sourceTree = "<group>";
+		};
+		753784DAC7C0E96DE3C89EBE /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				EFF6C7613C7BA8B9B85892E7 /* Components.swift */,
+				2D97E9B3B5A061ED699DC256 /* NetworkNow.swift */,
+				20246E755FF5546DC43D9B36 /* PulsePinger.swift */,
+				BE2F68507A8C8EB2D90EAC4B /* PulseShared.swift */,
+				B956BDCC037B943B453F5613 /* PulseTheme.swift */,
+			);
+			name = Shared;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		8AC67AADA67DC7F78C1E63A9 /* PulseWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				753784DAC7C0E96DE3C89EBE /* Shared */,
+				6FCD851D987DD38ECA4D9D5D /* Intents.swift */,
+				9F65FA1379254F4B2F6ECB09 /* PingWidgets.swift */,
+				6397C3645A0AE9C6FF2EE64F /* PulseWidgetsBundle.swift */,
+				64C17F79CF97A24436AAA6DE /* StatusWidgets.swift */,
+				4C34CB9F99961517EFF5E6AA /* ToolWidgets.swift */,
+				7327B3C7690DAB064CD076E1 /* Info.plist */,
+				1A47F61F1BFEEC5CD195FF76 /* PulseWidgets.entitlements */,
+			);
+			name = PulseWidgets;
+			path = PulseWidgets;
 			sourceTree = "<group>";
 		};
 		9740EEB11CF90186004384FC /* Flutter */ = {
@@ -108,6 +198,8 @@
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				E4DFFEE656C6E3DE69043668 /* GoogleService-Info.plist */,
+				06F6EEFBF445B9295C2EF2AF /* Frameworks */,
+				8AC67AADA67DC7F78C1E63A9 /* PulseWidgets */,
 			);
 			sourceTree = "<group>";
 		};
@@ -116,6 +208,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				7CDE5C87C8D0090F9E4F66AF /* PulseWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -131,8 +224,17 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				FB7EB3BFDBDC06DF27FE2E08 /* Runner.entitlements */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		DF74B107DA89D37AF7C8830D /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				16FBA4A80E9D11A2CF5FA762 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -156,6 +258,23 @@
 			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		5217862B3E9210D3C991DF48 /* PulseWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 29849B6D11B4B431A88CD576 /* Build configuration list for PBXNativeTarget "PulseWidgets" */;
+			buildPhases = (
+				6B7C6A0894DF8B6765019296 /* Sources */,
+				01031D39C0DE969B89BE604B /* Frameworks */,
+				F2C39E94CE47D59DF1AA6E00 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PulseWidgets;
+			productName = PulseWidgets;
+			productReference = 7CDE5C87C8D0090F9E4F66AF /* PulseWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -165,11 +284,13 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				9067E3E17219BF84201DD554 /* Embed Foundation Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F564B64554187A885004DB9E /* PBXTargetDependency */,
 			);
 			name = Runner;
 			packageProductDependencies = (
@@ -217,6 +338,7 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
+				5217862B3E9210D3C991DF48 /* PulseWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -238,6 +360,13 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				EF4013C491464078D2893F5F /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F2C39E94CE47D59DF1AA6E00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,6 +415,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6B7C6A0894DF8B6765019296 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				843FEFD0ED354BEC6841CB8F /* Intents.swift in Sources */,
+				DC8E4239C74603F57872641E /* PingWidgets.swift in Sources */,
+				4383CB936C6B447709447232 /* PulseWidgetsBundle.swift in Sources */,
+				7AC4C0F140A881205029DA6A /* StatusWidgets.swift in Sources */,
+				27222F7E8DD83D972CF83AE5 /* ToolWidgets.swift in Sources */,
+				5BCF68AB112D34831C3B2A31 /* Components.swift in Sources */,
+				3D1745A129523BF76212110B /* NetworkNow.swift in Sources */,
+				BC06EC4AD68D7F620585C4AC /* PulsePinger.swift in Sources */,
+				BCF0CCF50705B6ED29DDCDF3 /* PulseShared.swift in Sources */,
+				B9641349746F0A10F8B4A653 /* PulseTheme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		97C146EA1CF9000F007C117D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -302,6 +448,12 @@
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
+		};
+		F564B64554187A885004DB9E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = PulseWidgets;
+			target = 5217862B3E9210D3C991DF48 /* PulseWidgets */;
+			targetProxy = C62E6FEF1628A18552830071 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -325,6 +477,36 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		14E1A397850C193E7330E508 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = PulseWidgets/PulseWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 9M6X7M798T;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PulseWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pranta.pulse.PulseWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -383,7 +565,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 9M6X7M798T;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -446,6 +630,36 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
+			};
+			name = Profile;
+		};
+		540B78CF3D574F54EEB68B18 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = PulseWidgets/PulseWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 9M6X7M798T;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PulseWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pranta.pulse.PulseWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Profile;
 		};
@@ -566,7 +780,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 9M6X7M798T;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -592,7 +808,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 9M6X7M798T;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -611,9 +829,48 @@
 			};
 			name = Release;
 		};
+		EE85B84A9084004CCB8EAD5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = PulseWidgets/PulseWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 9M6X7M798T;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PulseWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pranta.pulse.PulseWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		29849B6D11B4B431A88CD576 /* Build configuration list for PBXNativeTarget "PulseWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				14E1A397850C193E7330E508 /* Release */,
+				EE85B84A9084004CCB8EAD5F /* Debug */,
+				540B78CF3D574F54EEB68B18 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

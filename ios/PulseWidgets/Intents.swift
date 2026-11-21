@@ -117,6 +117,10 @@ struct PulseHostQuery: EntityStringQuery {
 
   func suggestedEntities() async throws -> [PulseHostEntity] { all() }
 
+  /// The Ping widget's starting host. (`@Parameter(default:)` only takes
+  /// literals, so an entity default has to come from the query.)
+  func defaultResult() async -> PulseHostEntity? { .cloudflare }
+
   /// Typing a host offers it as-is, so any address can be picked.
   func entities(matching string: String) async throws -> [PulseHostEntity] {
     let q = string.trimmingCharacters(in: .whitespaces)
@@ -132,7 +136,7 @@ struct PingConfig: WidgetConfigurationIntent {
   static var title: LocalizedStringResource = "Ping"
   static var description = IntentDescription("Live latency for one host.")
 
-  @Parameter(title: "Host", default: PulseHostEntity.cloudflare) var host: PulseHostEntity?
+  @Parameter(title: "Host") var host: PulseHostEntity?
   @Parameter(title: "Refresh", default: .m30) var interval: RefreshInterval
   @Parameter(title: "Pings per refresh", default: 4, inclusiveRange: (1, 10)) var probes: Int
   @Parameter(title: "Reply chart", default: true) var showChart: Bool
@@ -146,9 +150,9 @@ struct MultiPingConfig: WidgetConfigurationIntent {
   static var description = IntentDescription("Router, DNS and servers side by side.")
 
   @Parameter(
-    title: "Hosts", default: [PulseHostEntity.router, .cloudflare, .google, .quad9],
+    title: "Hosts",
     size: [.systemSmall: 3, .systemMedium: 4, .systemLarge: 6, .systemExtraLarge: 6, .accessoryRectangular: 3])
-  var hosts: [PulseHostEntity]
+  var hosts: [PulseHostEntity]  // empty until edited: `targets` falls back to the four defaults
   @Parameter(title: "Refresh", default: .m30) var interval: RefreshInterval
   @Parameter(title: "Pings per refresh", default: 4, inclusiveRange: (1, 10)) var probes: Int
   @Parameter(title: "Reply charts", default: true) var showChart: Bool
