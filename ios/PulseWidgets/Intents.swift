@@ -152,13 +152,18 @@ struct MultiPingConfig: WidgetConfigurationIntent {
   @Parameter(
     title: "Hosts",
     size: [.systemSmall: 3, .systemMedium: 4, .systemLarge: 6, .systemExtraLarge: 6, .accessoryRectangular: 3])
-  var hosts: [PulseHostEntity]  // empty until edited: `targets` falls back to the four defaults
+  // Optional: a non-optional parameter without a default traps when read before the user edits the widget (App
+  // Intents asserts), and entity defaults can't be literals. Unset → `targets` falls back to the four defaults.
+  var hosts: [PulseHostEntity]?
   @Parameter(title: "Refresh", default: .m30) var interval: RefreshInterval
   @Parameter(title: "Pings per refresh", default: 4, inclusiveRange: (1, 10)) var probes: Int
   @Parameter(title: "Reply charts", default: true) var showChart: Bool
   @Parameter(title: "Background", default: .solid) var background: CardStyle
 
-  var targets: [PulseTarget] { hosts.isEmpty ? [PulseHostEntity.router, .cloudflare, .google, .quad9].map(\.target) : hosts.map(\.target) }
+  var targets: [PulseTarget] {
+    let picked = hosts ?? []
+    return (picked.isEmpty ? [PulseHostEntity.router, .cloudflare, .google, .quad9] : picked).map(\.target)
+  }
 }
 
 struct SpeedConfig: WidgetConfigurationIntent {

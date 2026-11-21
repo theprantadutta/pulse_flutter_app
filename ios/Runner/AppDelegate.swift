@@ -6,22 +6,29 @@ import NetworkExtension
 import SystemConfiguration
 import UIKit
 
+// UIScene lifecycle (required for apps built with the iOS 27 SDK, which otherwise crash at launch): the engine is
+// created by FlutterSceneDelegate (Info.plist › UIApplicationSceneManifest), so plugins and channels are registered
+// in didInitializeImplicitFlutterEngine. Launch-time setup stays in didFinishLaunching.
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
-    if let registrar = self.registrar(forPlugin: "PulseNetworkInfo") {
-      PulseNetworkInfo.register(with: registrar)
-    }
     // Plugins for the background monitor's engine.
     SwiftFlutterForegroundTaskPlugin.setPluginRegistrantCallback { registry in
       GeneratedPluginRegistrant.register(with: registry)
     }
+    // Must be set before launch finishes. (flutter_foreground_task registers its BGTask in +load.)
     UNUserNotificationCenter.current().delegate = self
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "PulseNetworkInfo") {
+      PulseNetworkInfo.register(with: registrar)
+    }
   }
 }
 
