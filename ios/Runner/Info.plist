@@ -91,5 +91,8 @@
 		</dict>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- Only the OS's standard HTTPS/TLS: exempt, so App Store Connect skips the export-compliance question. -->
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 	</dict>
 </plist>
