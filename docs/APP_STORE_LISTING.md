@@ -129,12 +129,14 @@ admin page). No user-generated content, messaging, ads, gambling, or contests.
 
 ## App Store Connect state (Nov 21, 2026)
 
+- **Submitted:** 1.2.1 (build 6) sent to App Review Nov 21, 2026 ~16:45 ("Waiting for Review"), auto-release.
+
 - App Information, Pricing (free, 175 regions), age rating (4+), version 1.2.1 listing text and URLs: saved.
 - App Review contact: the owner (name, phone, email entered in App Store Connect). Sign-in required: off. Release:
   automatically after approval.
 - App Privacy: answers saved (verified against the code: `verification.dart` report payload, gated by
-  `settings.routerReports`; server stores `install` as a salted SHA-256, no IP). **Publish** is the owner's click
-  (it is an attestation).
+  `settings.routerReports`; server stores `install` as a salted SHA-256, no IP). Published by the owner
+  (Nov 21, 2026).
 - App Compliance, China mainland: Security Assessment = No (no E2E messaging or AIGC), AI Generated or Synthetic
   Content = No; both Active. ICP Filing Number is optional ("if you have one"); not needed until Apple asks.
   Digital Services Act: the account is already declared a trader.

@@ -261,7 +261,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "16458ed503340f9e02a73267377a2e0ecbbeafdc"
+      ref: pulse-ios-identifier-v1
       resolved-ref: "16458ed503340f9e02a73267377a2e0ecbbeafdc"
       url: "https://github.com/theprantadutta/dart_ping.git"
     source: git

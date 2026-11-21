@@ -61,7 +61,7 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   (internal testing or later), never on `flutter run` builds.
 - `app_reviews.dart`: every saved run (HistoryRepository `onSaved`) is a review moment; the native review sheet
   (`in_app_review`) shows after 5 runs and 3 days, at most every 120 days and 3 times. "Rate Pulse" buttons open the
-  store page instead (requestReview from a button may show nothing). Set `PulseShareConfig.appStoreId` once on iOS.
+  store page instead (requestReview from a button may show nothing). iOS uses `PulseShareConfig.appStoreId` = 6837617016.
 
 ### Home screen widgets (Nov 2026)
 - Six widgets on both platforms: Ping (one host), Multi-host ping (up to 6), Speed test, Monitor, Network, Quick actions.
@@ -140,9 +140,38 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   <password.txt> --publisher "CN=Pranta Dutta" --install-certificate false`, install with Windows PowerShell 5.1
   `Add-AppxPackage` (the Appx module does not load in PowerShell 7). Never trust msix's bundled test_certificate.pfx —
   its private key is public.
-- iOS/macOS were not built on this machine (Windows). On a Mac: `flutter build ios` / `macos`; iOS needs the
-  "Access Wi-Fi Information" capability enabled in Xcode for the SSID. iOS uses Swift Package Manager only (no
-  CocoaPods, Nov 2026); permission_handler's SPM manifest enables permissions from the Info.plist usage keys. macOS runs un-sandboxed (system tools) — see `macos/Runner/*.entitlements`.
+- iOS and macOS build on the owner's Mac (see "iOS / App Store" below). macOS runs un-sandboxed (system tools) —
+  see `macos/Runner/*.entitlements`.
+
+## iOS / App Store (Nov 2026)
+- **App Store Connect:** "Pulse: Ping & Network Tools", Apple ID 6837617016, SKU `com.pranta.pulse`, team 9M6X7M798T.
+  Bundle IDs `com.pranta.pulse` + `com.pranta.pulse.PulseWidgets`, App Group `group.com.pranta.pulse` (App Groups +
+  Access Wi-Fi Information on both). 1.2.1 (6) submitted for review Nov 21, 2026, auto-release. Listing text, privacy
+  label, compliance answers and screenshot inventory: `docs/APP_STORE_LISTING.md`. Distribution profiles are in the
+  owner's `~/Certificates & Documents/Apple Signing/` (`Pulse.mobileprovision`, `Pulse_Widgets.mobileprovision`);
+  Xcode automatic signing is what the IPA uses. No App Store Connect API access on the team: the owner uploads.
+- **Build:** `flutter build ipa --release --dart-define-from-file=secrets.json` → `build/ios/ipa/Pulse.ipa`. Bump the
+  build number (`version:` in pubspec) for every upload. Swift Package Manager only (no CocoaPods); permission_handler's
+  SPM manifest enables permissions from the Info.plist usage keys. `ITSAppUsesNonExemptEncryption` = false.
+- **UIScene lifecycle** (required by the iOS 27 SDK, else a launch crash): `Info.plist` › `UIApplicationSceneManifest`
+  with `FlutterSceneDelegate`; `AppDelegate` registers plugins and the `network_info` channel in
+  `didInitializeImplicitFlutterEngine`; the notification delegate and the background-engine registrant stay in
+  `didFinishLaunching` (flutter_foreground_task registers its BGTask in `+load`).
+- **Large iPads:** `PulseTabletScale` (`lib/core/widgets/pulse/pulse_tablet_scale.dart`, iOS only) lays a 12.9"/13"
+  iPad out at an 800 dp short side (the design tablet) and draws it scaled up; 11" iPads, phones, Android and desktop
+  are untouched. Render tests cover `kIpad13`, `kIpad13Landscape`, `kIpad11` (`test/render/render_harness.dart`).
+- **dart_ping fork (keep it):** iOS ping uses our fork via `dependency_overrides` in `pubspec.yaml`
+  (`theprantadutta/dart_ping`, tag `pulse-ios-identifier-v1` = commit 16458ed on branch `fix/ios-reply-identifier`).
+  Upstream 10.0.1 matched ICMP replies by sequence only and Darwin delivers every reply to every ICMP socket, so
+  concurrent pings stole each other's replies (wrong RTTs, traceroute "reaching" the target at hop 1). Don't drop the
+  override, delete the tag or switch back to pub.dev until point-source/dart_ping#106 is merged and released; then
+  remove the override, bump `dart_ping`, and re-check the Ping board and a traceroute on an iPhone simulator.
+  Local clone: `~/Personal/forks/dart_ping`; its `example/ios` RunnerTests (46) cover the fix.
+- **Simulators** (owner's 8 GB Mac): boot one at a time, and coordinate with other Claude sessions that use them.
+  Screenshots: `xcrun simctl status_bar <udid> override --time 9:41 …`, idb for taps (points, not pixels). Raw captures
+  in `app-store-screenshots/{iphone,ipad}/`, the owner's captioned set in `app-store-screenshots/marketing/`.
+- **Widgets:** the extension builds and registers; still to test placing each widget on a real device
+  (`docs/IOS_WIDGETS.md` checklist).
 
 ## Microsoft Store (Windows MSIX)
 - Packaging: `dart run msix:create` (config in `pubspec.yaml` › `msix_config`). Output: `build/windows/x64/runner/Release/pulse.msix`.
