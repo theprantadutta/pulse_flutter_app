@@ -114,3 +114,15 @@ login (Keychain, sent only to the router), location (only lets iOS reveal the Wi
 
 Every content question: None / No. Unrestricted web access: No (the only web view shows the user's own router
 admin page). No user-generated content, messaging, ads, gambling, or contests.
+
+## App Store Connect state (Nov 21, 2026)
+
+- App Information, Pricing (free, 175 regions), age rating (4+), version 1.2.1 listing text and URLs: saved.
+- App Review contact: the owner (name, phone, email entered in App Store Connect). Sign-in required: off. Release:
+  automatically after approval.
+- App Privacy: answers saved (verified against the code: `verification.dart` report payload, gated by
+  `settings.routerReports`; server stores `install` as a salted SHA-256, no IP). **Publish** is the owner's click
+  (it is an attestation).
+- App Compliance, China mainland: Security Assessment = No (no E2E messaging or AIGC), AI Generated or Synthetic
+  Content = No; both Active. ICP Filing Number is optional ("if you have one"); not needed until Apple asks.
+  Digital Services Act: the account is already declared a trader.
