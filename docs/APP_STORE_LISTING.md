@@ -97,6 +97,12 @@ Raw captures (live data on the office network, status bar overridden to 9:41) fo
   traceroute, speed (live + result), router, router devices, LAN scan, port scan, Geo IP, tools. Retaken Nov 21, 2026
   after the large-iPad layout fix (`PulseTabletScale`: 13" iPads lay out like the 800 dp design tablet, scaled up).
 
+Marketing (captioned, the ones uploaded to App Store Connect on Nov 21, 2026):
+
+- `app-store-screenshots/marketing/iphone-6.3/` — 10 × 1206×2622, in the "iPhone with Dynamic Island (medium
+  display)" 6.1"/6.3" slot; App Store Connect scales them for the other iPhone sizes.
+- `app-store-screenshots/marketing/ipad-13/` — 9 × 2064×2752, in the iPad 13" slot (used for all iPad sizes).
+
 Avoided: own public IP / location (Geo IP shows github.com), the router's WAN IP is masked by the app.
 
 ## App Privacy (nutrition label)
