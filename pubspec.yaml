@@ -81,6 +81,15 @@ dev_dependencies:
 # only uses it in its iOS build hook. Drop this once dart_ping allows 2.x.
 dependency_overrides:
   code_assets: ^2.2.0
+  # iOS: dart_ping 10.0.1 matched ICMP replies by sequence only, and Darwin hands
+  # every reply to every ICMP socket, so concurrent pings (Ping board, the
+  # traceroute's parallel probes) claimed each other's replies. Our fork matches
+  # on a per-run identifier; drop this once upstream releases the fix
+  # (point-source/dart_ping, branch fix/ios-reply-identifier on the fork).
+  dart_ping:
+    git:
+      url: https://github.com/theprantadutta/dart_ping.git
+      ref: 16458ed503340f9e02a73267377a2e0ecbbeafdc
 
 flutter:
   uses-material-design: true
