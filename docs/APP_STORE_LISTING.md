@@ -133,8 +133,7 @@ admin page). No user-generated content, messaging, ads, gambling, or contests.
   review Notes: (1) a screen recording starting at app launch showing the main flow, (2) purpose and audience, (3) how
   to use it, (4) external services, (5) regional differences, (6) regulated-industry documents.
 - **Response:** the version was renamed **1.2.2** (no "What's New" field on a first release); the Notes answer all six
-  points; the recording (`/Users/pranta/Personal/Pulse/app-review/Pulse-App-Review.mp4`, 4 min, 720p, kept out of
-  this public repo because it shows LAN device names) was made on the iOS 27.0 simulator and the Notes say so. It
+  points; the recording (`app-review/Pulse-App-Review.mp4`, 4 min, 720p; it shows the office LAN's device names) was made on the iOS 27.0 simulator and the Notes say so. It
   leaves out Geo IP and the Network tab because they show the public IP. Build 7 (1.2.2) attached; resubmitted
   Nov 23, 2026 22:30 ("Waiting for Review"), video attached by the owner, auto-release.
 - Reusable flow script and how it was recorded: `xcrun simctl io <udid> recordVideo --codec=h264`, idb taps, the
