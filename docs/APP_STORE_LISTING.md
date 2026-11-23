@@ -127,6 +127,18 @@ login (Keychain, sent only to the router), location (only lets iOS reveal the Wi
 Every content question: None / No. Unrestricted web access: No (the only web view shows the user's own router
 admin page). No user-generated content, messaging, ads, gambling, or contests.
 
+## App Review: 2.1 rejection and resubmission (Nov 22–23, 2026)
+
+- **1.2.1 (6) rejected** Nov 22, 2026 under **Guideline 2.1 – Information Needed** (not a bug). Apple asked for, in the
+  review Notes: (1) a screen recording starting at app launch showing the main flow, (2) purpose and audience, (3) how
+  to use it, (4) external services, (5) regional differences, (6) regulated-industry documents.
+- **Response:** the version was renamed **1.2.2** (no "What's New" field on a first release); the Notes answer all six
+  points; the recording (`/Users/pranta/Personal/Pulse/app-review/Pulse-App-Review.mp4`, 4 min, 720p, kept out of
+  this public repo because it shows LAN device names) was made on the iOS 27.0 simulator and the Notes say so. It
+  leaves out Geo IP and the Network tab because they show the public IP. Build 7 (1.2.2) built Nov 23.
+- Reusable flow script and how it was recorded: `xcrun simctl io <udid> recordVideo --codec=h264`, idb taps, the
+  ping-board add step retried until the chip row changes (it is flaky right after a fresh install).
+
 ## App Store Connect state (Nov 21, 2026)
 
 - **Submitted:** 1.2.1 (build 6) sent to App Review Nov 21, 2026 ~16:45 ("Waiting for Review"), auto-release.

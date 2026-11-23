@@ -146,7 +146,7 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
 ## iOS / App Store (Nov 2026)
 - **App Store Connect:** "Pulse: Ping & Network Tools", Apple ID 6837617016, SKU `com.pranta.pulse`, team 9M6X7M798T.
   Bundle IDs `com.pranta.pulse` + `com.pranta.pulse.PulseWidgets`, App Group `group.com.pranta.pulse` (App Groups +
-  Access Wi-Fi Information on both). 1.2.1 (6) submitted for review Nov 21, 2026, auto-release. Listing text, privacy
+  Access Wi-Fi Information on both). 1.2.1 (6) was rejected Nov 22 under Guideline 2.1 (Information Needed: a screen recording plus purpose, usage, external services, regions, regulation answers in the review Notes); the version was renamed 1.2.2 and resubmitted with build 7 (see `docs/APP_STORE_LISTING.md`). Listing text, privacy
   label, compliance answers and screenshot inventory: `docs/APP_STORE_LISTING.md`. Distribution profiles are in the
   owner's `~/Certificates & Documents/Apple Signing/` (`Pulse.mobileprovision`, `Pulse_Widgets.mobileprovision`);
   Xcode automatic signing is what the IPA uses. No App Store Connect API access on the team: the owner uploads.
@@ -167,20 +167,13 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   override, delete the tag or switch back to pub.dev until point-source/dart_ping#106 is merged and released; then
   remove the override, bump `dart_ping`, and re-check the Ping board and a traceroute on an iPhone simulator.
   Local clone: `~/Personal/forks/dart_ping`; its `example/ios` RunnerTests (46) cover the fix.
-- **dart_ping#106: real-iPhone test owed (TODO for the next macOS session):** #106 was merged Nov 22, 2026, with the
-  maintainer's own additions on top (offline `PingEngine.matchedProbe` tests, loopback 127.0.0.1/::1 tests, the live
-  test made opt-in via `DART_PING_LIVE_TESTS`). It is **not released yet** (pub.dev still 10.0.1). The maintainer has
-  no iPhone and will release "asap once I know it works on a real device"; we offered to test. To do:
-  1. In the local clone, `git fetch upstream && git checkout upstream/develop` (point-source/dart_ping; that's where
-     the merged code is, our fork tag is the older pre-review commit).
-  2. On a **physical iPhone** (not a simulator), test single pings and concurrent pings over **IPv4 and IPv6**
-     (e.g. 1.1.1.1 + 8.8.8.8 together, and 2606:4700:4700::1111 + 2001:4860:4860::8888; IPv6 needs a network
-     that has it, or a hotspot over cellular). Also run a traceroute. Ways to test: the `example/` app, or Pulse with
-     the override temporarily pointing at `git: {url: https://github.com/point-source/dart_ping.git, ref: develop}`
-     (don't commit that). Optionally run RunnerTests on the device, plus `TEST_RUNNER_DART_PING_LIVE_TESTS=1`.
-  3. Draft the results comment for the owner to approve before posting on #106 (what you ran, iOS version and device,
-     v4/v6 results, and any failures).
-  4. Once 10.0.2+ is on pub.dev: remove the `dart_ping` override, bump `dart_ping`, re-check on iPhone and Android.
+- **dart_ping#106 status (Nov 23, 2026):** merged Nov 22 with the maintainer's additions (offline
+  `PingEngine.matchedProbe` tests, loopback v4/v6 tests, live test opt-in via `DART_PING_LIVE_TESTS`), **not released**
+  (pub.dev 10.0.1). The owner has **no physical iPhone**; results from the iOS 27 simulator (Pulse pointed at
+  `point-source/dart_ping@2714e20`: 3 concurrent pings + traceroute correct) and native macOS runs (v4 hosts + `::1`)
+  were posted on #106 (issuecomment-7106663384), saying plainly it was a simulator. Internet IPv6 is untested (the
+  office network has no IPv6 route). Once 10.0.2+ is on pub.dev: remove the `dart_ping` override, bump `dart_ping`,
+  re-check the Ping board and a traceroute on an iPhone simulator and on Android.
 - **Simulators** (owner's 8 GB Mac): boot one at a time, and coordinate with other Claude sessions that use them.
   Screenshots: `xcrun simctl status_bar <udid> override --time 9:41 …`, idb for taps (points, not pixels). Raw captures
   in `app-store-screenshots/{iphone,ipad}/`, the owner's captioned set in `app-store-screenshots/marketing/`.
