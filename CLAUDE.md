@@ -146,7 +146,7 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
 ## iOS / App Store (Nov 2026)
 - **App Store Connect:** "Pulse: Ping & Network Tools", Apple ID 6837617016, SKU `com.pranta.pulse`, team 9M6X7M798T.
   Bundle IDs `com.pranta.pulse` + `com.pranta.pulse.PulseWidgets`, App Group `group.com.pranta.pulse` (App Groups +
-  Access Wi-Fi Information on both). 1.2.1 (6) was rejected Nov 22 under Guideline 2.1 (Information Needed: a screen recording plus purpose, usage, external services, regions, regulation answers in the review Notes); the version was renamed 1.2.2 and resubmitted with build 7 (see `docs/APP_STORE_LISTING.md`). Listing text, privacy
+  Access Wi-Fi Information on both). 1.2.1 (6) was rejected Nov 22 under Guideline 2.1 (Information Needed: a screen recording plus purpose, usage, external services, regions, regulation answers in the review Notes); the version was renamed 1.2.2 and resubmitted with build 7 on Nov 23, 2026 22:30, with the review video attached (see `docs/APP_STORE_LISTING.md`). Listing text, privacy
   label, compliance answers and screenshot inventory: `docs/APP_STORE_LISTING.md`. Distribution profiles are in the
   owner's `~/Certificates & Documents/Apple Signing/` (`Pulse.mobileprovision`, `Pulse_Widgets.mobileprovision`);
   Xcode automatic signing is what the IPA uses. No App Store Connect API access on the team: the owner uploads.
