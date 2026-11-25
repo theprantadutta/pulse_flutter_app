@@ -6,6 +6,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/format.dart';
 import '../../../core/widgets/pulse/pulse.dart';
+import '../../../data/models/session_tool.dart';
+import '../../../providers/history_provider.dart';
 import '../../../providers/ping_provider.dart';
 import '../../navigation/destinations.dart';
 import 'ping_configure.dart';
@@ -320,7 +322,12 @@ class _EmptyPing extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gateway = ref.watch(gatewayProvider).value;
-    final recent = ref.watch(recentTargetsProvider).value ?? const [];
+    final recentAsync = ref.watch(recentTargetsProvider);
+    final recent = recentAsync.value ?? const [];
+    // The content is centred, so Recent arriving a moment after the first
+    // frame pushed everything up. Show it once Recent has loaded (a local
+    // query, well under a second) so it lays out once, in place.
+    final ready = recentAsync.hasValue || recentAsync.hasError;
     final compact = context.isCompact;
     return PulsePage(
       title: 'Ping',
@@ -341,61 +348,78 @@ class _EmptyPing extends ConsumerWidget {
             onPressed: () => showAddHostSheet(context),
           ),
       ],
-      body: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(context.pagePadding, 0, context.pagePadding, 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PulseEmptyState(
-                  title: 'Add a host to start pinging',
-                  message: 'Pulse pings it every second, shows latency and loss live, and saves each run to History.',
-                  icon: PulseIcons.pulse,
-                  shape: PulseShape.cookie9,
-                  action: Column(
-                    children: [
-                      PulseButton(
-                        label: 'Add host',
-                        icon: PulseIcons.plus,
-                        size: PulseButtonSize.large,
-                        onPressed: () => showAddHostSheet(context),
-                      ),
-                      const SizedBox(height: 12),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: 8,
-                          children: [
-                            PulseChip(label: 'Router', icon: PulseIcons.router, onTap: () => pingRouter(context, ref)),
-                            PulseChip(label: '1.1.1.1', onTap: () => _start(context, ref, '1.1.1.1', 'Cloudflare')),
-                            PulseChip(label: '8.8.8.8', onTap: () => _start(context, ref, '8.8.8.8', 'Google DNS')),
-                          ],
+      body: AnimatedOpacity(
+        opacity: ready ? 1 : 0,
+        duration: const Duration(milliseconds: 180),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(context.pagePadding, 0, context.pagePadding, 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PulseEmptyState(
+                    title: 'Add a host to start pinging',
+                    message: 'Pulse pings it every second, shows latency and loss live, and saves each run to History.',
+                    icon: PulseIcons.pulse,
+                    shape: PulseShape.cookie9,
+                    action: Column(
+                      children: [
+                        PulseButton(
+                          label: 'Add host',
+                          icon: PulseIcons.plus,
+                          size: PulseButtonSize.large,
+                          onPressed: () => showAddHostSheet(context),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (recent.isNotEmpty) ...[
-                  const PulseSectionLabel('Recent'),
-                  PulseSegmentedList(
-                    children: [
-                      for (final r in recent.take(5))
-                        PulseListItem(
-                          title: r.name?.isNotEmpty == true ? r.name! : r.host,
-                          subtitle: r.name?.isNotEmpty == true ? r.host : 'Tap to ping again',
-                          leading: HostBadge(host: r.host, name: r.name, gateway: gateway),
-                          trailing: r.avg == null
-                              ? null
-                              : PulseNumber(fmtMs(r.avg), unit: 'ms', unitScale: .6, style: pulseNumber(18)),
-                          onTap: () => _start(context, ref, r.host, r.name),
+                        const SizedBox(height: 12),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: 8,
+                            children: [
+                              PulseChip(
+                                label: 'Router',
+                                icon: PulseIcons.router,
+                                onTap: () => pingRouter(context, ref),
+                              ),
+                              PulseChip(label: '1.1.1.1', onTap: () => _start(context, ref, '1.1.1.1', 'Cloudflare')),
+                              PulseChip(label: '8.8.8.8', onTap: () => _start(context, ref, '8.8.8.8', 'Google DNS')),
+                            ],
+                          ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
+                  if (recent.isNotEmpty) ...[
+                    PulseSectionLabel(
+                      'Recent',
+                      trailing: TextButton(
+                        onPressed: () {
+                          ref.read(historyFilterProvider.notifier).setTool(SessionTool.ping);
+                          context.go(Routes.history);
+                        },
+                        child: const Text('See all'),
+                      ),
+                    ),
+                    PulseSegmentedList(
+                      children: [
+                        for (final r in recent.take(5))
+                          PulseListItem(
+                            title: r.name?.isNotEmpty == true ? r.name! : r.host,
+                            subtitle: r.name?.isNotEmpty == true ? r.host : 'Tap to ping again',
+                            leading: HostBadge(host: r.host, name: r.name, gateway: gateway),
+                            trailing: r.avg == null
+                                ? null
+                                : PulseNumber(fmtMs(r.avg), unit: 'ms', unitScale: .6, style: pulseNumber(18)),
+                            onTap: () => _start(context, ref, r.host, r.name),
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

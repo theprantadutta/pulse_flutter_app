@@ -416,13 +416,24 @@ class _Summary extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-            PulseButton(
-              label: 'Share',
-              icon: PulseIcons.share,
-              style: PulseButtonStyle.tonal,
-              size: PulseButtonSize.large,
-              onPressed: () => showShareResult(context, speedShareResult(s)),
-            ),
+            // On phones a labelled Share button left "Run again" too little
+            // room ("Run a..."); there both side actions are icons.
+            if (context.isCompact)
+              PulseIconButton(
+                icon: PulseIcons.share,
+                tooltip: 'Share result',
+                style: PulseIconButtonStyle.tonal,
+                visualSize: 56,
+                onPressed: () => showShareResult(context, speedShareResult(s)),
+              )
+            else
+              PulseButton(
+                label: 'Share',
+                icon: PulseIcons.share,
+                style: PulseButtonStyle.tonal,
+                size: PulseButtonSize.large,
+                onPressed: () => showShareResult(context, speedShareResult(s)),
+              ),
             const SizedBox(width: 8),
             PulseIconButton(
               icon: PulseIcons.copy,

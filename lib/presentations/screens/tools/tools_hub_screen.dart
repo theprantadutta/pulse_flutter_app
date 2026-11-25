@@ -64,7 +64,23 @@ class ToolsHubScreen extends ConsumerWidget {
           return CustomScrollView(
             slivers: [
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(pad, 4, pad, 0),
+                padding: EdgeInsets.fromLTRB(pad, 4, pad, compact ? 10 : gap),
+                sliver: SliverToBoxAdapter(
+                  child: PulseEntrance(
+                    index: 0,
+                    // Router first. Phones: as tall as its content. Tablets:
+                    // fixed, so the grid below can fill the rest of the height.
+                    child: compact
+                        ? const RouterToolCard()
+                        : SizedBox(
+                            height: cardHeight,
+                            child: RouterToolCard(large: true, lines: columns == 4 ? 2 : 3, chips: chips),
+                          ),
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(pad, 0, pad, pad + inset),
                 sliver: SliverGrid.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
@@ -74,7 +90,7 @@ class ToolsHubScreen extends ConsumerWidget {
                   ),
                   itemCount: grid.length,
                   itemBuilder: (context, i) => PulseEntrance(
-                    index: i,
+                    index: i + 1,
                     child: ToolTile(
                       tool: grid[i],
                       status: status[grid[i]] ?? ToolStatus(grid[i].empty),
@@ -83,22 +99,6 @@ class ToolsHubScreen extends ConsumerWidget {
                       // smaller badge and title so the content fits.
                       dense: !compact && tileHeight < 185,
                     ),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(pad, compact ? 10 : gap, pad, pad + inset),
-                sliver: SliverToBoxAdapter(
-                  child: PulseEntrance(
-                    index: grid.length,
-                    // Phones: as tall as its content. Tablets: fixed, so the
-                    // grid above can fill the rest of the height.
-                    child: compact
-                        ? const RouterToolCard()
-                        : SizedBox(
-                            height: cardHeight,
-                            child: RouterToolCard(large: true, lines: columns == 4 ? 2 : 3, chips: chips),
-                          ),
                   ),
                 ),
               ),
