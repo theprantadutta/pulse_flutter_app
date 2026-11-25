@@ -7,6 +7,7 @@ import '../services/net/router/drivers/driver_registry.dart';
 import '../services/net/router/drivers/router_driver.dart';
 import '../services/net/router/verification.dart';
 import 'router_provider.dart';
+import '../services/usage_counts.dart';
 import 'settings_provider.dart' show sharedPreferencesProvider;
 
 /// The driver that can sign in to the router on this network, found by
@@ -126,6 +127,7 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     final force = _forceNext;
     _forceNext = false;
     await driver.signIn(login, force: force);
+    UsageCounts.count(UsageEvent.routerSignIn);
     final m = await _loadAll(driver);
     _timer = Timer.periodic(const Duration(seconds: 15), (_) => _refreshClients());
     return m;
@@ -194,6 +196,7 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     final d = _driver, cur = state.value;
     if (d == null || cur == null) throw const RouterDriverException(RouterErrorKind.unexpected, 'not signed in');
     await d.setWifi(n, enabled: enabled, ssid: ssid, password: password);
+    UsageCounts.count(UsageEvent.routerWifi);
     // Radios restart after a change; give the router a moment.
     await Future<void>.delayed(const Duration(seconds: 2));
     try {
@@ -216,6 +219,7 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     final d = _driver, cur = state.value;
     if (d == null || cur == null) throw const RouterDriverException(RouterErrorKind.unexpected, 'not signed in');
     await d.setWan(w);
+    UsageCounts.count(UsageEvent.routerWan);
     bool? result;
     for (var i = 0; i < 8; i++) {
       await Future<void>.delayed(const Duration(seconds: 3));
@@ -236,6 +240,7 @@ class RouterManager extends AsyncNotifier<RouterManaged?> {
     if (d == null) return;
     _timer?.cancel();
     await d.reboot();
+    UsageCounts.count(UsageEvent.routerReboot);
   }
 }
 

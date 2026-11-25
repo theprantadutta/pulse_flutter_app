@@ -9,6 +9,7 @@ import '../services/net/dns.dart';
 import '../services/net/ping_prober.dart';
 import '../services/net/port_scanner.dart';
 import 'ping_provider.dart';
+import '../services/usage_counts.dart';
 
 enum PortPreset { common, wellKnown, custom }
 
@@ -102,6 +103,7 @@ class PortScanNotifier extends Notifier<PortScanState> {
   Future<void> scan(String target) async {
     target = target.trim();
     if (target.isEmpty) return;
+    UsageCounts.count(UsageEvent.portsScan);
     await _sub?.cancel();
     List<int> ports;
     try {

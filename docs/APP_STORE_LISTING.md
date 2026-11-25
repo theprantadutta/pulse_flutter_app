@@ -60,7 +60,7 @@ MADE FOR IPHONE AND IPAD
 iPhone gets a compact layout; iPad gets a navigation rail, a tools pane and a ping board with every host side by side. Home Screen and Lock Screen widgets for ping, multi-host ping, speed test, monitor, network and quick actions.
 
 PRIVATE BY DESIGN
-No account, no ads, no analytics, no tracking. Your history stays on your device. Your router password is saved only if you choose "Remember on this device", in the Keychain, and is sent only to your router. Public IP and location lookups use Pulse's own server, which keeps nothing. Router results ("did it work?") are anonymous and can be turned off.
+No account, no ads, no tracking. Your history stays on your device, and usage counts are anonymous daily totals with no ID or location (you can turn them off). Your router password is saved only if you choose "Remember on this device", in the Keychain, and is sent only to your router. Public IP and location lookups use Pulse's own server, which keeps nothing. Router results ("did it work?") are anonymous and can be turned off.
 
 Free and open source (Apache 2.0). IP geolocation by DB-IP.
 
@@ -107,13 +107,16 @@ Avoided: own public IP / location (Geo IP shows github.com), the router's WAN IP
 
 ## App Privacy (nutrition label)
 
-Matches privacy policy 1.3 (Nov 18, 2026; https://legal.pranta.dev/pulse/privacy). Data used to track you: none.
+Matches privacy policy 1.4 (Nov 25, 2026; https://legal.pranta.dev/pulse/privacy). Data used to track you: none.
 Data linked to you: none. **Data not linked to you** (both optional, Settings › Privacy › "Share router results";
 purpose App Functionality only):
 
 - Diagnostics › Other Diagnostic Data: router results (connection type, router model, hardware and firmware version,
   which change, whether it worked).
 - Identifiers › Device ID: the random per-install ID sent with router results (stored only as a salted hash).
+- Usage Data › Product Interaction (from 1.2.4, purpose **Analytics**, optional via Settings › Privacy › "Share
+  anonymous usage counts", on by default): anonymous daily counts of feature use and app opens, platform, app
+  version, install-age bucket. No ID, no IP stored, no location. Not used for tracking.
 
 Not collected: public IP / geo lookups (the server answers and forgets them), history (on device only), router
 login (Keychain, sent only to the router), location (only lets iOS reveal the Wi-Fi name; never read or sent).

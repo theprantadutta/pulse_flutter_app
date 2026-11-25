@@ -13,6 +13,7 @@ import '../services/net/ping_prober.dart';
 import 'network_provider.dart';
 import 'ping_provider.dart';
 import 'settings_provider.dart';
+import '../services/usage_counts.dart';
 
 @immutable
 class GeoState {
@@ -141,6 +142,7 @@ class GeoNotifier extends Notifier<GeoState> {
       state = state.copyWith(error: 'Public IP lookups are turned off in Settings → Privacy.');
       return;
     }
+    UsageCounts.count(UsageEvent.geoLookup);
     state = state.copyWith(loading: true, clearError: true);
     final me = await _me();
     if (me == null) {
@@ -157,6 +159,7 @@ class GeoNotifier extends Notifier<GeoState> {
       state = state.copyWith(query: query, error: 'Public IP lookups are turned off in Settings → Privacy.');
       return;
     }
+    UsageCounts.count(UsageEvent.geoLookup);
     state = GeoState(query: query, me: state.me, loading: true);
     final started = DateTime.now();
     String ip;

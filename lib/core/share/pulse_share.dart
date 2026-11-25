@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../constants/share_config.dart';
 import '../widgets/pulse/pulse.dart';
+import '../../services/usage_counts.dart';
 
 /// One figure on a shared result card ("Upload 48 Mbps").
 class ShareStat {
@@ -83,6 +84,7 @@ Rect? _origin(BuildContext context) {
 /// "Share Pulse": the app link with a one-line pitch. Thanks the user only
 /// when the share actually went out (not when they backed out of the sheet).
 Future<void> shareApp(BuildContext context) async {
+  UsageCounts.count(UsageEvent.share);
   final result = await SharePlus.instance.share(
     ShareParams(
       title: 'Share Pulse',
@@ -122,6 +124,7 @@ class _ShareSheetState extends State<_ShareSheet> {
   ShareableResult get r => widget.result;
 
   Future<void> _shareImage(BuildContext buttonContext) async {
+    UsageCounts.count(UsageEvent.share);
     setState(() => _busy = true);
     try {
       final boundary = _card.currentContext!.findRenderObject()! as RenderRepaintBoundary;
@@ -215,7 +218,10 @@ class _ShareSheetState extends State<_ShareSheet> {
                     icon: PulseIcons.export,
                     style: PulseButtonStyle.tonal,
                     expand: true,
-                    onPressed: () => _shareText(b),
+                    onPressed: () {
+                      UsageCounts.count(UsageEvent.share);
+                      _shareText(b);
+                    },
                   ),
                 ),
               ),

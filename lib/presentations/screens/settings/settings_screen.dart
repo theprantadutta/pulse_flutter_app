@@ -23,6 +23,7 @@ import '../../../services/net/ping_prober.dart';
 import '../../../services/store/app_reviews.dart';
 import '../../../services/store/app_updates.dart';
 import '../../navigation/destinations.dart';
+import '../../../services/usage_counts.dart';
 import 'legal_screen.dart';
 import 'settings_widgets.dart';
 import '../../../services/widgets/home_widgets.dart';
@@ -633,6 +634,18 @@ class SettingsSectionBody extends ConsumerWidget {
                   value: s.routerReports,
                   onChanged: (v) => set((x) => x.copyWith(routerReports: v)),
                 ),
+                (r) => PulseSwitchItem(
+                  icon: PulseIcons.data,
+                  title: 'Share anonymous usage counts',
+                  subtitle:
+                      'Daily totals, like how many traceroutes were run. No IDs, no location, nothing you test or '
+                      'find, so nothing can be traced back to you',
+                  value: s.usageCounts,
+                  onChanged: (v) async {
+                    await set((x) => x.copyWith(usageCounts: v));
+                    await UsageCounts.setEnabled(v);
+                  },
+                ),
                 (r) => SettingsValueItem(
                   icon: PulseIcons.shield,
                   title: 'Privacy policy',
@@ -655,7 +668,8 @@ class SettingsSectionBody extends ConsumerWidget {
                 "Public IP lookups power Network, Geo IP and Traceroute locations. They go only to Pulse's own server "
                 '(pulse.pranta.dev), which answers from a built-in database and keeps nothing; no third-party IP '
                 'service is used. Everything else stays on this device, and the Geo IP map is built in. Pulse also '
-                'talks to Cloudflare and Hetzner (speed test) and GitHub (update check). No accounts, no analytics.',
+                'talks to Cloudflare and Hetzner (speed test) and GitHub (update check). No accounts, no tracking: usage counts '
+                'are anonymous daily totals with no ID or location.',
                 style: context.type.bodySmall!.copyWith(color: context.colors.onSurfaceVariant),
               ),
             ),

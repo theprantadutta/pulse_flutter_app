@@ -8,6 +8,7 @@ import '../services/background/monitor_engine.dart';
 import 'database_provider.dart';
 import 'monitor_provider.dart';
 import 'settings_provider.dart';
+import '../services/usage_counts.dart';
 
 final alertRulesProvider = StreamProvider<List<AlertRule>>((ref) {
   final db = ref.watch(databaseProvider);
@@ -170,6 +171,7 @@ class AlertRulesRepository {
       enabled: Value(d.enabled),
     );
     if (d.id == null) {
+      UsageCounts.count(UsageEvent.alertAdd);
       return db.into(db.alertRules).insert(companion.copyWith(createdAt: Value(DateTime.now())));
     }
     await (db.update(db.alertRules)..where((r) => r.id.equals(d.id!))).write(

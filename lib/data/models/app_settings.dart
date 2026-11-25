@@ -31,6 +31,7 @@ class AppSettings {
     this.exportFolder,
     this.publicIpLookups = true,
     this.routerReports = true,
+    this.usageCounts = true,
     this.lanDeviceWatch = false,
   });
 
@@ -73,6 +74,9 @@ class AppSettings {
   /// changes per router model. Off: Pulse neither asks nor sends.
   final bool routerReports;
 
+  /// Anonymous daily usage counts to Pulse's server (no IDs, no location).
+  final bool usageCounts;
+
   /// Periodically sweeps the LAN in the background to detect new devices.
   final bool lanDeviceWatch;
 
@@ -99,6 +103,7 @@ class AppSettings {
     String? exportFolder,
     bool? publicIpLookups,
     bool? routerReports,
+    bool? usageCounts,
     bool? lanDeviceWatch,
   }) {
     return AppSettings(
@@ -124,6 +129,7 @@ class AppSettings {
       exportFolder: exportFolder ?? this.exportFolder,
       publicIpLookups: publicIpLookups ?? this.publicIpLookups,
       routerReports: routerReports ?? this.routerReports,
+      usageCounts: usageCounts ?? this.usageCounts,
       lanDeviceWatch: lanDeviceWatch ?? this.lanDeviceWatch,
     );
   }

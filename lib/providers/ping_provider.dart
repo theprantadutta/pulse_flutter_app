@@ -15,6 +15,7 @@ import '../services/store/app_reviews.dart';
 import '../services/net/ping_prober.dart';
 import 'database_provider.dart';
 import 'settings_provider.dart';
+import '../services/usage_counts.dart';
 
 /// Most concurrent live pings allowed at once.
 const kMaxLivePings = 32;
@@ -223,6 +224,7 @@ class PingBoardNotifier extends Notifier<PingBoard> {
     host = host.trim();
     if (host.isEmpty) return null;
     if (state.liveCount >= kMaxLivePings) return null;
+    UsageCounts.count(UsageEvent.pingStart);
     final settings = ref.read(settingsProvider);
     final p = params ?? PingParams.fromSettings(settings);
     final saved = await ref.read(savedTargetsRepositoryProvider).touch(host);

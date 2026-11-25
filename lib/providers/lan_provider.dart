@@ -12,6 +12,7 @@ import '../services/net/port_scanner.dart';
 import 'database_provider.dart';
 import 'network_provider.dart';
 import 'ping_provider.dart';
+import '../services/usage_counts.dart';
 
 /// A scanned device plus what Pulse remembers about it.
 @immutable
@@ -198,6 +199,7 @@ class LanScanNotifier extends Notifier<LanScanState> {
 
   Future<void> scan() async {
     if (state.running) return;
+    UsageCounts.count(UsageEvent.lanScan);
     final snap = await ref.read(networkInfoProvider.future);
     final link = snap.link;
     if (link.localIpv4 == null) {

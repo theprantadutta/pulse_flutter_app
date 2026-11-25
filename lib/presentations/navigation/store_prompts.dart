@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/widgets/pulse/pulse.dart';
 import '../../services/store/app_reviews.dart';
 import '../../services/store/app_updates.dart';
+import '../../services/usage_counts.dart';
 
 /// App-wide update and review prompts, around the shell:
 /// * a quiet update check at start (at most every 12 h), then "Update" when
@@ -43,6 +44,7 @@ class _StorePromptsState extends ConsumerState<StorePrompts> with WidgetsBinding
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // A flexible download may have finished while Pulse was in the background.
     if (state == AppLifecycleState.resumed) {
+      unawaited(UsageCounts.resumed());
       final u = ref.read(appUpdateProvider);
       if (u.source == UpdateSource.play && u.status == UpdateStatus.downloading) {
         unawaited(ref.read(appUpdateProvider.notifier).check());

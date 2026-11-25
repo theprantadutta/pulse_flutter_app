@@ -9,6 +9,7 @@ import '../services/net/dns.dart';
 import '../services/net/traceroute.dart';
 import 'ping_provider.dart';
 import 'settings_provider.dart';
+import '../services/usage_counts.dart';
 
 @immutable
 class TraceState {
@@ -115,6 +116,7 @@ class TraceNotifier extends Notifier<TraceState> {
   Future<void> run(String target) async {
     target = target.trim();
     if (target.isEmpty) return;
+    UsageCounts.count(UsageEvent.traceRun);
     await _sub?.cancel();
     final started = DateTime.now();
     state = TraceState(target: target, running: true, maxHops: state.maxHops, probes: state.probes, startedAt: started);

@@ -10,6 +10,7 @@ import '../services/net/ping_prober.dart';
 import '../services/background/monitor_engine.dart';
 import 'alerts_provider.dart';
 import 'ping_provider.dart';
+import '../services/usage_counts.dart';
 
 enum PacketState { pending, ok, late, lost }
 
@@ -206,6 +207,7 @@ class LossNotifier extends Notifier<LossState> {
   Future<void> start(String target) async {
     target = target.trim();
     if (target.isEmpty || state.running) return;
+    UsageCounts.count(UsageEvent.lossRun);
     _cancelTimers();
     final gen = ++_generation;
     String address;

@@ -94,7 +94,7 @@ class AboutScreen extends ConsumerWidget {
     final footer = Padding(
       padding: const EdgeInsets.fromLTRB(4, 20, 4, 0),
       child: Text(
-        '$_copyright\nReleased under the $kLicenseName license. No accounts, no analytics.',
+        '$_copyright\nReleased under the $kLicenseName license. No accounts, no tracking.',
         textAlign: TextAlign.center,
         style: context.type.bodySmall!.copyWith(color: c.onSurfaceVariant),
       ),

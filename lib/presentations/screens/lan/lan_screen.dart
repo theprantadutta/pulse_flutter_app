@@ -16,6 +16,7 @@ import '../../../services/net/lan/name_probe.dart';
 import '../../../services/net/port_scanner.dart';
 import '../../navigation/destinations.dart';
 import 'shape_wobble.dart';
+import '../../../services/usage_counts.dart';
 
 /// 10 LAN scan: every device on the local subnet. Phone: summary card, filter
 /// chips, the selected device expanded in secondaryContainer and the others in
@@ -337,6 +338,7 @@ Future<void> _wake(BuildContext context, LanDevice d, String? broadcast) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   try {
     await WakeOnLan.wake(d.host.mac!, broadcasts: [?broadcast, '255.255.255.255']);
+    UsageCounts.count(UsageEvent.wolSend);
     messenger?.showSnackBar(SnackBar(content: Text('Magic packet sent to ${d.host.mac}')));
   } on Object catch (e) {
     messenger?.showSnackBar(SnackBar(content: Text('Wake failed: $e')));

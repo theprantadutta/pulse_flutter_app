@@ -45,7 +45,7 @@ MADE FOR EVERY SCREEN
 Phones get a compact layout; tablets get a navigation rail, a tools pane and a ping board with every host side by side. Home screen widgets for ping, speed test, monitor and network.
 
 PRIVATE BY DESIGN
-No account, no ads, no analytics, no tracking. Your history stays on your device. Your router password is saved only if you choose "Remember on this device", in the system's secure storage, and is sent only to your router. Public IP and location lookups use Pulse's own server, which keeps nothing. Router results ("did it work?") are anonymous and can be turned off.
+No account, no ads, no tracking. Your history stays on your device, and usage counts are anonymous daily totals with no ID or location (you can turn them off). Your router password is saved only if you choose "Remember on this device", in the system's secure storage, and is sent only to your router. Public IP and location lookups use Pulse's own server, which keeps nothing. Router results ("did it work?") are anonymous and can be turned off.
 
 Free and open source (Apache 2.0).
 
@@ -72,6 +72,12 @@ Add, under **Data collected**:
   driver, model, hardware and firmware version, which change was made and whether it worked, with a random ID made
   for this installation (stored hashed). Purpose: App functionality. Not linked to the user, not shared, optional
   (Settings › Privacy › "Share router results"), encrypted in transit.
+
+- **App activity › App interactions** (1.2.4, privacy policy 1.4): anonymous daily usage counts, i.e. how many
+  times each feature was used per day, whether the app was opened that day with a coarse install-age bucket, the
+  platform and app version. No identifier of any kind. Purpose: Analytics. Not linked to the user, not shared, not
+  used for tracking or ads, optional (Settings › Privacy › "Share anonymous usage counts", on by default),
+  encrypted in transit.
 
 Unchanged: no personal info, no location, no device identifiers. The router password is not collected: it is
 stored on the device only (if the user opts in) and sent only to the user's own router, which is not a transfer

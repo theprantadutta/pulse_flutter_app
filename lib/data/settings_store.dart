@@ -48,6 +48,7 @@ class SettingsStore {
       exportFolder: prefs.getString(kExportFolderKey),
       publicIpLookups: pick(kPublicIpLookupsKey, _defaults.publicIpLookups),
       routerReports: pick(kRouterReportsKey, _defaults.routerReports),
+      usageCounts: pick(kUsageCountsKey, _defaults.usageCounts),
       lanDeviceWatch: pick(kLanDeviceWatchKey, _defaults.lanDeviceWatch),
     );
   }
@@ -76,6 +77,7 @@ class SettingsStore {
       if (s.exportFolder != null) prefs.setString(kExportFolderKey, s.exportFolder!),
       prefs.setBool(kPublicIpLookupsKey, s.publicIpLookups),
       prefs.setBool(kRouterReportsKey, s.routerReports),
+      prefs.setBool(kUsageCountsKey, s.usageCounts),
       prefs.setBool(kLanDeviceWatchKey, s.lanDeviceWatch),
     ]);
   }

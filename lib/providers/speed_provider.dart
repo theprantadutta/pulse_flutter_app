@@ -12,6 +12,7 @@ import 'database_provider.dart';
 import 'geo_provider.dart';
 import 'network_provider.dart';
 import 'ping_provider.dart';
+import '../services/usage_counts.dart';
 
 @immutable
 class SpeedState {
@@ -115,6 +116,7 @@ class SpeedNotifier extends Notifier<SpeedState> {
 
   Future<void> start() async {
     if (state.running) return;
+    UsageCounts.count(UsageEvent.speedRun);
     if (!state.hasServer) await autoSelect();
     final started = DateTime.now();
     _test = SpeedTest();

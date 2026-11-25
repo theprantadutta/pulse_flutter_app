@@ -82,7 +82,10 @@ class _Document extends StatelessWidget {
       itemBuilder: (context, i) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
-          child: SizedBox(width: double.infinity, child: _BlockView(block: blocks[i], first: i == 0)),
+          child: SizedBox(
+            width: double.infinity,
+            child: _BlockView(block: blocks[i], first: i == 0),
+          ),
         ),
       ),
     );

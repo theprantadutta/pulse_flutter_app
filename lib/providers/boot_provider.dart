@@ -1,9 +1,13 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../services/background/notifications.dart';
 import '../services/desktop/desktop_host.dart';
 import '../services/desktop/launch_at_login.dart';
+import '../services/usage_counts.dart';
 import 'connection_provider.dart';
 import 'database_provider.dart';
 import 'monitor_provider.dart';
@@ -105,6 +109,17 @@ class BootNotifier extends Notifier<BootState> {
         // failure is surfaced on the launch screen and in the relevant screen.
         state = BootState(step: i, total: tasks.length, status: tasks[i].status, version: version, error: e);
       }
+    }
+    // Anonymous usage counts: release builds only (debug and profile runs
+    // would skew the totals), in the background, never delays opening.
+    if (kReleaseMode) {
+      unawaited(
+        UsageCounts.init(
+          UsageCounts(ref.read(sharedPreferencesProvider), version: info.version),
+          enabled: ref.read(settingsProvider).usageCounts,
+          installed: info.installTime,
+        ),
+      );
     }
     state = BootState(step: tasks.length, total: tasks.length, status: 'Ready', version: version, done: true);
   }

@@ -102,6 +102,20 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   the session. Feature verification is meant to be crowd-sourced through the backend (owner's decision): ask users
   whether an action worked and store verified/unverified per driver + model + firmware + feature.
 
+### Anonymous usage counts (1.2.4, Nov 2026)
+The owner's decision: **no Firebase / GA4 / Crashlytics, ever** ("no tracking" is a selling point). Instead
+`lib/services/usage_counts.dart` keeps a per-day tally on the device and sends finished days once a day to
+pulse-rust-api `POST /api/v1/usage` (signed app-only route), which only adds them to daily counters
+(`usage_daily`). No install/device/ad ID, no hosts or results, no IP stored, no location. Daily `active` carries an
+install-age bucket (d0, d1_6, d7_29, d30) for a rough retention view. Rules:
+- **Release builds only** (`kReleaseMode` in `boot_provider.dart`); debug/profile never count.
+- Setting: Settings › Privacy › "Share anonymous usage counts" (`usageCounts`, on by default); off clears the tally.
+- Count with `UsageCounts.count(UsageEvent.x)` at the action's entry point. A new event must be added to BOTH
+  `UsageEvent` and `EVENTS` in pulse-rust-api `src/usage.rs` (the server drops unknown names; a test checks the
+  lists match), and a label to `EVENT_LABEL` in `dashboard/src/lib/aggregate.ts`.
+- Never add identifiers, hosts, IPs, names, router data or results to a count.
+- The owner reads totals in the Svelte dashboard at https://pulse.pranta.dev/admin (pulse-rust-api `dashboard/`).
+
 ### Decisions made with the user
 - Persistence: **drift** (`lib/data/db/app_database.dart`, run `dart run build_runner build` after schema edits).
 - **No stubs anywhere.** Every screen/provider must be fully real: LAN scan, Monitor, Alerts, Geo IP, Packet loss
@@ -188,10 +202,10 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
   C++/WinRT channel (`windows/runner/startup_task.cpp`); unpackaged builds keep the HKCU Run key. Windows only lets the
   user re-enable a task they switched off in Task Manager › Startup apps.
 - Toast activation: `toast_activator.clsid` must equal the `guid` in `lib/services/background/notifications.dart`.
-- Version: `msix_version` must end in `.0` for the Store; keep it in step with `version:` (currently 1.2.3.0 / 1.2.3+8; bump the build number for every Play upload).
+- Version: `msix_version` must end in `.0` for the Store; keep it in step with `version:` (currently 1.2.4.0 / 1.2.4+9; bump the build number for every Play upload).
 - Policies (Store listing): https://legal.pranta.dev/pulse/privacy and https://legal.pranta.dev/pulse/terms, served
   from `G:\Personal\MyProjects\privacy-project\Projects\pulse\` (push to master → auto-deploys). Current versions:
-  privacy 1.3, terms 1.3 (Nov 18, 2026: router control, saved router logins, anonymous router results); bump them and the dates whenever data use, services or permissions change.
+  privacy 1.4, terms 1.3 (privacy 1.4 Nov 25, 2026: anonymous usage counts; 1.3 Nov 18: router control, saved router logins, anonymous router results); bump them and the dates whenever data use, services or permissions change.
   The app shows its own bundled copies in-app (`assets/legal/privacy.md`, `terms.md`; `LegalScreen` at
   `/settings/legal?doc=privacy|terms`, opened from Settings › Privacy and About; the globe button opens the hosted
   page). After editing the privacy-project files, copy them into `assets/legal/`: `test/render/legal_render_test.dart`

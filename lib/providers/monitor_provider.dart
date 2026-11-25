@@ -14,6 +14,7 @@ import '../services/desktop/desktop_host.dart';
 import 'database_provider.dart';
 import 'ping_provider.dart';
 import 'settings_provider.dart';
+import '../services/usage_counts.dart';
 
 /// Where monitoring currently runs.
 enum MonitorMode { idle, app, tray, service, paused }
@@ -429,6 +430,7 @@ class MonitorTargetsRepository {
       );
       return existing.id;
     }
+    UsageCounts.count(UsageEvent.monitorAdd);
     final n = await db.monitorTargets.count().getSingle();
     return db
         .into(db.monitorTargets)

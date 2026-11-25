@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../data/models/app_settings.dart';
+import 'usage_counts.dart';
 
 /// Writes exports. With an export folder set (desktop) files go straight
 /// there; otherwise the system save dialog asks where.
@@ -18,6 +19,7 @@ class ExportService {
 
   /// Returns where the file went, or null when the user cancelled.
   Future<String?> save({required String fileName, required String content, required AppSettings settings}) async {
+    UsageCounts.count(UsageEvent.export);
     final bytes = Uint8List.fromList(utf8.encode(content));
     final folder = settings.exportFolder;
     final desktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
