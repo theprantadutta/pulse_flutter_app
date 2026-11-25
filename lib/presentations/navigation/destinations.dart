@@ -22,6 +22,9 @@ class Routes {
   static const settings = '/settings';
   static const about = '/settings/about';
   static const support = '/settings/support';
+
+  /// A bundled legal document: `?doc=privacy` or `?doc=terms`.
+  static const legal = '/settings/legal';
   static const widgets = '/settings/widgets';
 
   /// One home screen widget's settings: `?id=<appWidgetId>&kind=<WidgetKind>`;
@@ -87,6 +90,7 @@ MobileTab tabFor(String location) {
 String? parentRoute(String location) {
   if (_under(location, Routes.about)) return Routes.settings;
   if (_under(location, Routes.support)) return Routes.settings;
+  if (_under(location, Routes.legal)) return Routes.settings;
   if (_under(location, Routes.widgets)) return Routes.settings;
   if (location.startsWith('${Routes.router}/')) return Routes.router;
   if (_under(location, Routes.alertRule)) return Routes.alerts;

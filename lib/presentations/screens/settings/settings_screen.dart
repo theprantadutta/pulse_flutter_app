@@ -23,6 +23,7 @@ import '../../../services/net/ping_prober.dart';
 import '../../../services/store/app_reviews.dart';
 import '../../../services/store/app_updates.dart';
 import '../../navigation/destinations.dart';
+import 'legal_screen.dart';
 import 'settings_widgets.dart';
 import '../../../services/widgets/home_widgets.dart';
 
@@ -635,16 +636,16 @@ class SettingsSectionBody extends ConsumerWidget {
                 (r) => SettingsValueItem(
                   icon: PulseIcons.shield,
                   title: 'Privacy policy',
-                  subtitle: 'legal.pranta.dev/pulse/privacy',
+                  subtitle: 'What Pulse keeps and sends',
                   chevron: true,
-                  onTap: () => openExternalLink(context, kPrivacyUrl),
+                  onTap: () => context.push(LegalDoc.privacy.route),
                 ),
                 (r) => SettingsValueItem(
                   icon: PulseIcons.info,
                   title: 'Terms of use',
-                  subtitle: 'legal.pranta.dev/pulse/terms',
+                  subtitle: 'The rules for using Pulse',
                   chevron: true,
-                  onTap: () => openExternalLink(context, kTermsUrl),
+                  onTap: () => context.push(LegalDoc.terms.route),
                 ),
               ],
             ),

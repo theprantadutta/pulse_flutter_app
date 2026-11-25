@@ -14,6 +14,7 @@ import '../screens/ping/ping_detail_screen.dart';
 import '../screens/ping/ping_screen.dart';
 import '../screens/ports/ports_screen.dart';
 import '../screens/settings/about_screen.dart';
+import '../screens/settings/legal_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/support_screen.dart';
 import '../screens/splash/splash_screen.dart';
@@ -160,6 +161,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           _route(Routes.settings, (s) => const SettingsScreen()),
           _route(Routes.about, (s) => const AboutScreen()),
           _route(Routes.support, (s) => const SupportScreen()),
+          _route(Routes.legal, (s) => LegalScreen(doc: LegalDoc.fromName(s.uri.queryParameters['doc']))),
           _route(Routes.widgets, (s) => const WidgetsScreen()),
           _route(Routes.router, (s) => const RouterScreen()),
           _route(Routes.routerDevices, (s) => const RouterDevicesScreen()),

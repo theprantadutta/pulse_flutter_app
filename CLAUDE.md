@@ -192,6 +192,11 @@ It replaced the earlier "Wire" design (branch `redesign/wire`, now merged histor
 - Policies (Store listing): https://legal.pranta.dev/pulse/privacy and https://legal.pranta.dev/pulse/terms, served
   from `G:\Personal\MyProjects\privacy-project\Projects\pulse\` (push to master → auto-deploys). Current versions:
   privacy 1.3, terms 1.3 (Nov 18, 2026: router control, saved router logins, anonymous router results); bump them and the dates whenever data use, services or permissions change.
+  The app shows its own bundled copies in-app (`assets/legal/privacy.md`, `terms.md`; `LegalScreen` at
+  `/settings/legal?doc=privacy|terms`, opened from Settings › Privacy and About; the globe button opens the hosted
+  page). After editing the privacy-project files, copy them into `assets/legal/`: `test/render/legal_render_test.dart`
+  fails while they differ (it skips if privacy-project isn't checked out beside `pulse`). The renderer only handles
+  headings, paragraphs, lists, `---` and `**bold**`; keep the documents to that.
 - STILL NEEDED from the user: a Partner Center account and the reserved app name; then copy Package/Identity/Name →
   `identity_name`, Package/Identity/Publisher (CN=…) → `publisher`, PublisherDisplayName → `publisher_display_name`,
   set `display_name` to the reserved name, and add that name to `displayNames` in privacy-project `Program.cs` if it

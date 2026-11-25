@@ -2,13 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/widgets/pulse/pulse.dart';
 import '../../navigation/destinations.dart';
-import 'settings_screen.dart' show kDeveloper, kPrivacyUrl, kTermsUrl, packageInfoProvider;
+import 'legal_screen.dart';
+import 'settings_screen.dart' show kDeveloper, packageInfoProvider;
 import 'settings_widgets.dart';
 
 const kSourceUrl = 'https://github.com/theprantadutta/pulse_flutter_app';
@@ -64,16 +66,16 @@ class AboutScreen extends ConsumerWidget {
         (r) => SettingsValueItem(
           icon: PulseIcons.shield,
           title: 'Privacy policy',
-          subtitle: kPrivacyUrl.replaceFirst('https://', ''),
+          subtitle: 'What Pulse keeps and sends',
           chevron: true,
-          onTap: () => openExternalLink(context, kPrivacyUrl),
+          onTap: () => context.push(LegalDoc.privacy.route),
         ),
         (r) => SettingsValueItem(
           icon: PulseIcons.info,
           title: 'Terms of use',
-          subtitle: kTermsUrl.replaceFirst('https://', ''),
+          subtitle: 'The rules for using Pulse',
           chevron: true,
-          onTap: () => openExternalLink(context, kTermsUrl),
+          onTap: () => context.push(LegalDoc.terms.route),
         ),
         (r) => SettingsValueItem(
           icon: PulseIcons.data,
