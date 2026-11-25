@@ -3,7 +3,7 @@ description: "Pulse — network diagnostics for desktop and mobile."
 
 publish_to: 'none'
 
-version: 1.2.2+7
+version: 1.2.3+8
 
 environment:
   sdk: ^3.13.0
@@ -113,7 +113,7 @@ msix_config:
   display_name: Pulse
   publisher_display_name: Pranta Dutta
   identity_name: com.pranta.pulse
-  msix_version: 1.2.2.0
+  msix_version: 1.2.3.0
   description: Network diagnostics, monitoring and router control - ping, traceroute, port scan, speed test, LAN scan, alerts and your router.
   languages: en-us
   logo_path: assets/brand/icon/master/pulse_icon_rounded_1024.png
